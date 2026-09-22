@@ -1,0 +1,6 @@
+{
+  "name": "Enterprise AI Meeting Assistant",
+  "description": "Dark-themed ML & audio-engineering pipeline turning meeting recordings into structured summaries, decisions, and action items.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

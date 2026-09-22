@@ -1,0 +1,13 @@
+streamlit>=1.35.0
+fastapi>=0.110.0
+torch
+torchaudio
+transformers<5.0
+soundfile
+plotly>=5.18.0
+matplotlib>=3.8.0
+pydantic>=2.0.0
+bcrypt>=4.0.0
+pyjwt>=2.8.0
+rouge-score
+bert-score

@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@keyframes meterPulse {
+  0%, 100% {
+    height: 8px;
+    opacity: 0.45;
+  }
+  50% {
+    height: 44px;
+    opacity: 1;
+  }
+}
+
+.animate-meter-bar {
+  animation: meterPulse 0.75s ease-in-out infinite;
+}
+
+@layer base {
+  :root {
+    --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #0A0E12;
+    color: #E7EDF3;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.03em;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}

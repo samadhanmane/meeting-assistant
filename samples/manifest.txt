@@ -1,0 +1,14 @@
+All of the signals and transcription, and some of the annotations, have been released publicly under the  Creative Commons Attribution 4.0 Licence (http://creativecommons.org/licenses/by/4.0). 
+
+	License text: CCBY4.0.txt
+
+Content of the download:
+
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/ES2002a/audio/ES2002a.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/ES2002b/audio/ES2002b.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/ES2002c/audio/ES2002c.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/ES2002d/audio/ES2002d.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/IS1001a/audio/IS1001a.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/IS1001b/audio/IS1001b.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/IS1001c/audio/IS1001c.Mix-Headset.wav
+	https://groups.inf.ed.ac.uk/ami/AMICorpusMirror//amicorpus/IS1001d/audio/IS1001d.Mix-Headset.wav

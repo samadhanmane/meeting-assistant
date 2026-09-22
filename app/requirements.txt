@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+torch
+torchaudio
+transformers<5.0
+soundfile
+rouge-score
+bert-score
+passlib
+bcrypt
+pyjwt
