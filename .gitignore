@@ -51,4 +51,7 @@ videoplayback.mp3
 .env
 .env.local
 .env.production
+!app/.env
+!frontend/.env
+!frontend/.env.example
 

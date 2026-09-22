@@ -1,9 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, __dirname, '');
+  const apiTarget = env.VITE_API_BASE_URL || 'http://localhost:8000';
+
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -15,10 +18,10 @@ export default defineConfig(() => {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
-      // Proxy API requests to the FastAPI backend during development
+      // Proxy API requests to the target configured in frontend/.env
       proxy: {
         '/api': {
-          target: 'http://localhost:8000',
+          target: apiTarget,
           changeOrigin: true,
         }
       }

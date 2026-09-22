@@ -40,29 +40,74 @@ APP_DIR = os.path.dirname(os.path.abspath(__file__))
 AE_MODEL_PATH = os.path.join(APP_DIR, "autoencoder.pt")
 VAE_MODEL_PATH = os.path.join(APP_DIR, "vae.pt")
 
+# Explicitly load environment variables strictly from /app/.env
+ENV_FILE = os.path.join(APP_DIR, ".env")
+
+
+def load_app_env(path: str):
+    """Load key-value environment variables from the given .env file."""
+    if not os.path.exists(path):
+        print(f"[Backend] Note: {path} not found. Using system environment variables.")
+        return
+
+    # Try python-dotenv first if available
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(dotenv_path=path, override=True)
+        print(f"[Backend] Loaded environment strictly from {path} (via dotenv)")
+        return
+    except ImportError:
+        pass
+
+    # Built-in fallback parser if python-dotenv is not installed
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    os.environ[k] = v
+        print(f"[Backend] Loaded environment strictly from {path} (internal parser)")
+    except Exception as err:
+        print(f"[Backend] Warning: Error reading {path}: {err}")
+
+
+load_app_env(ENV_FILE)
+
 app = FastAPI(
     title="Enterprise AI Meeting Assistant API",
     description="Backend API for meeting processing with per-meeting access control",
     version="2.0.0",
 )
 
-# CORS — allow frontend dev servers and production deployments
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:4173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:4173",
-    ],
-    allow_origin_regex=r"^https?://.*",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS — fetch allowed origins strictly from /app/.env (FRONTEND_URL or CORS_ORIGINS)
+raw_origins = os.getenv("FRONTEND_URL") or os.getenv("CORS_ORIGINS") or ""
+parsed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+
+if parsed_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=parsed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    print(f"[Backend] CORS allowed origins configured from /app/.env: {parsed_origins}")
+else:
+    # If not specified in /app/.env, fall back to open wildcard
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    print("[Backend] CORS allowed origins: [*] (wildcard)")
 
 # ---------------------------------------------------------------------------
 # JWT & Security Configuration

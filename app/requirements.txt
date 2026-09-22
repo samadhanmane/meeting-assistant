@@ -10,3 +10,4 @@ bert-score
 passlib
 bcrypt
 pyjwt
+python-dotenv

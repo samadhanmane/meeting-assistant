@@ -8,9 +8,10 @@ import {
 } from '../types/pipeline.ts';
 
 /**
- * API base URL — read from environment variable, defaults to empty (relative) or localhost:8000.
+ * API base URL — read strictly from frontend/.env (VITE_API_BASE_URL).
+ * No hardcoded origin fallback.
  */
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 /**
  * Job status response from the backend.
