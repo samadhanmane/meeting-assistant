@@ -218,7 +218,10 @@ def _run_pipeline_job(job_id: str, meeting_id: str, audio_path: str, config: dic
         jobs[job_id]["status"] = "processing"
         jobs[job_id]["stage"] = "Initializing pipeline..."
 
-        from app.pipeline.runner import run_pipeline
+        try:
+            from app.pipeline.runner import run_pipeline
+        except ImportError:
+            from pipeline.runner import run_pipeline
 
         def on_stage(stage_name: str, progress: int):
             jobs[job_id]["stage"] = stage_name
@@ -522,6 +525,9 @@ async def get_model_evaluation():
     """Return evaluation metrics for all models."""
     try:
         from app.pipeline.model_metrics import get_all_model_metrics
+        return get_all_model_metrics()
+    except ImportError:
+        from pipeline.model_metrics import get_all_model_metrics
         return get_all_model_metrics()
     except Exception as e:
         traceback.print_exc()
