@@ -161,8 +161,8 @@ def get_all_model_metrics() -> list:
         }
     )
 
-    ae_ckpt_label = "app/autoencoder.pt" if os.path.exists(os.path.join(APP_DIR, "autoencoder.pt")) else "checkpoints/autoencoder.pt"
-    vae_ckpt_label = "app/vae.pt" if os.path.exists(os.path.join(APP_DIR, "vae.pt")) else "checkpoints/vae.pt"
+    ae_ckpt_label = "autoencoder.pt"
+    vae_ckpt_label = "vae.pt"
 
     _cached_metrics = [
         {
