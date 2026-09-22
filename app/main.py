@@ -603,7 +603,21 @@ async def get_dataset_info():
     }
 
 
+@app.get("/")
+@app.head("/")
+async def root():
+    """Root endpoint for health checks and service info."""
+    return {
+        "service": "Enterprise AI Meeting Assistant API",
+        "status": "online",
+        "version": "2.0.0",
+        "docs": "/docs",
+        "health": "/api/health",
+    }
+
+
 @app.get("/api/health")
+@app.head("/api/health")
 async def health_check():
     """Health check endpoint."""
     import torch
