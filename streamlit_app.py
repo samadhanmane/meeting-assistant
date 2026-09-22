@@ -589,15 +589,12 @@ with st.sidebar:
         "ℹ️ About & Architecture",
     ]
 
-    selected_nav = st.radio(
+    st.radio(
         "NAVIGATION",
         nav_options,
-        index=nav_options.index(st.session_state.active_nav)
-        if st.session_state.active_nav in nav_options
-        else 0,
+        key="active_nav",
         label_visibility="collapsed",
     )
-    st.session_state.active_nav = selected_nav
 
     st.markdown("---")
 
