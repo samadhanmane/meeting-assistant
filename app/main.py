@@ -85,29 +85,22 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS — fetch allowed origins strictly from /app/.env (FRONTEND_URL or CORS_ORIGINS)
+# CORS — fetch allowed origins from /app/.env AND dynamically allow any Vercel / localhost / Render origin
 raw_origins = os.getenv("FRONTEND_URL") or os.getenv("CORS_ORIGINS") or ""
 parsed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
 
-if parsed_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=parsed_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    print(f"[Backend] CORS allowed origins configured from /app/.env: {parsed_origins}")
-else:
-    # If not specified in /app/.env, fall back to open wildcard
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    print("[Backend] CORS allowed origins: [*] (wildcard)")
+# Regex matching all localhost ports, 127.0.0.1, Vercel deployments (*.vercel.app), and Render
+CORS_REGEX = r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.vercel\.app|https://.*\.onrender\.com)$"
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=parsed_origins if parsed_origins else ["*"],
+    allow_origin_regex=CORS_REGEX,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+print(f"[Backend] CORS configured. Specific origins: {parsed_origins}. Dynamic regex: {CORS_REGEX}")
 
 # ---------------------------------------------------------------------------
 # JWT & Security Configuration

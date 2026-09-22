@@ -17,12 +17,20 @@ import uuid
 import numpy as np
 from typing import Optional, Callable
 
-from app.pipeline.audio_preprocessing import (
-    preprocess_audio_file,
-    SAMPLE_RATE,
-)
-from app.pipeline.transcriber import transcribe, word_error_rate, character_error_rate
-from app.pipeline.summarizer import MeetingTransformer, evaluate_summary
+try:
+    from app.pipeline.audio_preprocessing import (
+        preprocess_audio_file,
+        SAMPLE_RATE,
+    )
+    from app.pipeline.transcriber import transcribe, word_error_rate, character_error_rate
+    from app.pipeline.summarizer import MeetingTransformer, evaluate_summary
+except ImportError:
+    from pipeline.audio_preprocessing import (
+        preprocess_audio_file,
+        SAMPLE_RATE,
+    )
+    from pipeline.transcriber import transcribe, word_error_rate, character_error_rate
+    from pipeline.summarizer import MeetingTransformer, evaluate_summary
 
 
 def run_pipeline(
