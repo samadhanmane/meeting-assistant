@@ -610,8 +610,18 @@ if "unlocked_meetings" not in st.session_state:
 if "current_meeting_id" not in st.session_state:
     st.session_state.current_meeting_id = "session-en2001a"
 
+if "pending_nav" in st.session_state and st.session_state.pending_nav is not None:
+    st.session_state.active_nav = st.session_state.pending_nav
+    st.session_state.pending_nav = None
+
 if "active_nav" not in st.session_state or st.session_state.active_nav not in NAV_OPTIONS:
     st.session_state.active_nav = "Overview"
+
+
+def navigate_to(page: str):
+    """Safely navigate to another page before the widget is instantiated on rerun."""
+    st.session_state.pending_nav = page
+    st.rerun()
 
 
 # -----------------------------------------------------------------------------
@@ -837,8 +847,7 @@ if st.session_state.active_nav == "Overview":
             st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
             if st.button("Open", key=f"btn_open_{mid}", use_container_width=True):
                 st.session_state.current_meeting_id = mid
-                st.session_state.active_nav = "Meeting Sessions"
-                st.rerun()
+                navigate_to("Meeting Sessions")
 
 
 # =============================================================================
@@ -1102,8 +1111,7 @@ elif st.session_state.active_nav == "Upload & Process":
             )
 
             if st.button("View Meeting Results Now", use_container_width=True):
-                st.session_state.active_nav = "Meeting Sessions"
-                st.rerun()
+                navigate_to("Meeting Sessions")
 
 
 # =============================================================================
@@ -1388,8 +1396,7 @@ elif st.session_state.active_nav == "Access Gate":
                     st.session_state.unlocked_meetings.add(target_mid)
                     st.session_state.current_meeting_id = target_mid
                     st.success(f"Access granted for: {mt['meetingTitle']}")
-                    st.session_state.active_nav = "Meeting Sessions"
-                    st.rerun()
+                    navigate_to("Meeting Sessions")
                 else:
                     st.error("Authentication failed: invalid session password.")
             else:
