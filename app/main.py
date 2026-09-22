@@ -45,22 +45,25 @@ ENV_FILE = os.path.join(APP_DIR, ".env")
 
 
 def load_app_env(path: str):
-    """Load key-value environment variables from the given .env file."""
+    """
+    Load environment variables from app/.env without overriding system env vars.
+    This ensures variables configured in the Render dashboard take highest precedence.
+    """
     if not os.path.exists(path):
         print(f"[Backend] Note: {path} not found. Using system environment variables.")
         return
 
-    # Try python-dotenv first if available
+    # Try python-dotenv with override=False so Render dashboard env vars take precedence
     try:
         from dotenv import load_dotenv
 
-        load_dotenv(dotenv_path=path, override=True)
-        print(f"[Backend] Loaded environment strictly from {path} (via dotenv)")
+        load_dotenv(dotenv_path=path, override=False)
+        print(f"[Backend] Loaded environment from {path} (Render dashboard vars preserved)")
         return
     except ImportError:
         pass
 
-    # Built-in fallback parser if python-dotenv is not installed
+    # Built-in fallback parser (does not overwrite existing os.environ keys)
     try:
         with open(path, "r", encoding="utf-8") as f:
             for line in f:
@@ -71,8 +74,9 @@ def load_app_env(path: str):
                     k, v = line.split("=", 1)
                     k = k.strip()
                     v = v.strip().strip("'\"")
-                    os.environ[k] = v
-        print(f"[Backend] Loaded environment strictly from {path} (internal parser)")
+                    if k not in os.environ:
+                        os.environ[k] = v
+        print(f"[Backend] Loaded environment from {path} (internal parser, dashboard vars preserved)")
     except Exception as err:
         print(f"[Backend] Warning: Error reading {path}: {err}")
 
@@ -85,12 +89,15 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS — fetch allowed origins from /app/.env AND dynamically allow any Vercel / localhost / Render origin
+# CORS — collect all origins from Render dashboard and /app/.env
 raw_origins = os.getenv("FRONTEND_URL") or os.getenv("CORS_ORIGINS") or ""
-parsed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+# Normalize: strip spaces, strip trailing slashes, and deduplicate
+parsed_origins = list(set(
+    o.strip().rstrip("/") for o in raw_origins.split(",") if o.strip()
+))
 
-# Regex matching all localhost ports, 127.0.0.1, Vercel deployments (*.vercel.app), and Render
-CORS_REGEX = r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.vercel\.app|https://.*\.onrender\.com)$"
+# Regex matching all localhost ports, 127.0.0.1, all Vercel deployments (*.vercel.app), and Render
+CORS_REGEX = r"^(https?://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.vercel\.app|https://.*\.onrender\.com)/?$"
 
 app.add_middleware(
     CORSMiddleware,
@@ -100,7 +107,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-print(f"[Backend] CORS configured. Specific origins: {parsed_origins}. Dynamic regex: {CORS_REGEX}")
+print(f"[Backend] CORS configured. Active origins: {parsed_origins}. Dynamic regex: {CORS_REGEX}")
 
 # ---------------------------------------------------------------------------
 # JWT & Security Configuration
