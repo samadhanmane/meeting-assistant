@@ -1,9 +1,9 @@
 """
 streamlit_app.py
 ================
-Enterprise AI Meeting Assistant - Streamlit Cloud Edition
-Full-stack meeting transcription, latent spectrogram reconstruction,
-FLAN-T5 reasoning, and access-controlled meeting analysis.
+Enterprise AI Meeting Assistant
+Production-grade neural meeting intelligence platform.
+Designed with restrained, intentional SaaS aesthetics (Linear / Vercel style).
 """
 
 import os
@@ -27,224 +27,348 @@ if PROJECT_ROOT not in sys.path:
 # Page Configuration
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Enterprise AI Meeting Assistant",
-    page_icon="🎙️",
+    page_title="Meeting Assistant — Enterprise Intelligence",
+    page_icon="⏺",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # -----------------------------------------------------------------------------
-# High-End Dark Modern Theme CSS (Mirroring React Frontend)
+# Design System: Clean, Minimalist Dark Theme (Linear / Vercel Aesthetic)
 # -----------------------------------------------------------------------------
-CUSTOM_CSS = """
+DESIGN_SYSTEM_CSS = """
 <style>
-/* Global Styles & Dark Palette */
+/* Font Stack */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-    --bg-primary: #0A0E12;
-    --bg-surface: #121821;
-    --bg-surface-secondary: #17202A;
-    --border-color: #212B36;
-    --accent-teal: #2FD9C4;
-    --accent-purple: #8B7CF5;
-    --accent-gold: #F2B84B;
-    --accent-green: #4ADE80;
-    --accent-blue: #38BDF8;
-    --accent-red: #F87171;
-    --text-primary: #E7EDF3;
-    --text-secondary: #8B9AA8;
+    --bg-base: #0B0C0E;
+    --bg-surface: #111318;
+    --bg-surface-elevated: #161920;
+    --bg-surface-hover: #1C2029;
+    --border-subtle: #1F232C;
+    --border-hover: #2E3442;
+    --border-focus: #3B82F6;
+    
+    --text-primary: #EDEDED;
+    --text-secondary: #8E95A3;
+    --text-muted: #58606E;
+    
+    --accent-primary: #3B82F6;
+    --accent-hover: #2563EB;
+    
+    --semantic-success: #10B981;
+    --semantic-success-bg: rgba(16, 185, 129, 0.08);
+    --semantic-warning: #F59E0B;
+    --semantic-warning-bg: rgba(245, 158, 11, 0.08);
+    --semantic-error: #EF4444;
+    --semantic-error-bg: rgba(239, 68, 68, 0.08);
+    
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
 }
 
-/* Background overrides */
+/* Base Body Overrides */
 .stApp {
-    background-color: #0A0E12 !important;
-    color: #E7EDF3 !important;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    background-color: var(--bg-base) !important;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    letter-spacing: -0.01em;
 }
 
-/* Header & Sidebar overrides */
+/* Sidebar Styling */
 section[data-testid="stSidebar"] {
-    background-color: #0D131A !important;
-    border-right: 1px solid #1F2937 !important;
+    background-color: #0E1014 !important;
+    border-right: 1px solid var(--border-subtle) !important;
 }
 
-/* Custom Card Container */
-.ai-card {
-    background-color: #121821;
-    border: 1px solid #212B36;
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    transition: all 0.2s ease-in-out;
+section[data-testid="stSidebar"] div.stRadio > div[role="radiogroup"] {
+    gap: 2px !important;
 }
 
-.ai-card:hover {
-    border-color: #2FD9C4;
-    box-shadow: 0 6px 24px rgba(47, 217, 196, 0.12);
+section[data-testid="stSidebar"] div.stRadio label {
+    padding: 6px 12px !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
 }
 
-/* Custom Metric Card */
-.stat-box {
-    background: linear-gradient(145deg, #121821 0%, #161F2A 100%);
-    border: 1px solid #212B36;
-    border-radius: 14px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
+section[data-testid="stSidebar"] div.stRadio label:hover {
+    color: var(--text-primary) !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
-.stat-box::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #2FD9C4, #8B7CF5);
+section[data-testid="stSidebar"] div.stRadio label[data-checked="true"],
+section[data-testid="stSidebar"] div.stRadio label:has(input:checked) {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-surface-elevated) !important;
+    font-weight: 600 !important;
+    border: 1px solid var(--border-subtle) !important;
 }
 
-.stat-val {
-    font-size: 2.1rem;
-    font-weight: 800;
-    color: #E7EDF3;
+/* Page Headers */
+.page-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.page-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
     letter-spacing: -0.02em;
-    margin: 4px 0;
 }
 
-.stat-lbl {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #8B9AA8;
-    font-weight: 600;
-}
-
-.stat-delta {
-    font-size: 0.8rem;
-    color: #2FD9C4;
-    font-weight: 500;
-}
-
-/* Glowing Pill Badges */
-.badge-teal {
-    background: rgba(47, 217, 196, 0.12);
-    color: #2FD9C4;
-    border: 1px solid rgba(47, 217, 196, 0.3);
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.badge-purple {
-    background: rgba(139, 124, 245, 0.12);
-    color: #8B7CF5;
-    border: 1px solid rgba(139, 124, 245, 0.3);
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.badge-green {
-    background: rgba(74, 222, 128, 0.12);
-    color: #4ADE80;
-    border: 1px solid rgba(74, 222, 128, 0.3);
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.badge-gold {
-    background: rgba(242, 184, 75, 0.12);
-    color: #F2B84B;
-    border: 1px solid rgba(242, 184, 75, 0.3);
-    padding: 4px 10px;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-/* Transcript Dialogue Row */
-.transcript-bubble {
-    background: #151D26;
-    border-left: 3px solid #2FD9C4;
-    border-radius: 0 12px 12px 0;
-    padding: 14px 18px;
-    margin-bottom: 12px;
-}
-
-.transcript-header {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    margin-bottom: 6px;
-}
-
-.speaker-tag {
-    font-weight: 700;
-    color: #2FD9C4;
-}
-
-.timestamp-tag {
-    color: #8B9AA8;
-    font-family: monospace;
-}
-
-.transcript-text {
-    font-size: 0.95rem;
-    color: #D3DEE8;
+.page-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
     line-height: 1.5;
 }
 
-/* Streamlit Button Tweaks */
-div.stButton > button:first-child {
-    background: linear-gradient(135deg, #2FD9C4 0%, #1FB29F 100%) !important;
-    color: #0A0E12 !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 700 !important;
-    padding: 10px 22px !important;
-    box-shadow: 0 4px 14px rgba(47, 217, 196, 0.35) !important;
-    transition: all 0.2s ease !important;
+/* Surfaces and Panels */
+.panel {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
 }
 
-div.stButton > button:first-child:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(47, 217, 196, 0.5) !important;
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
 }
 
-/* Tabs styling */
+.panel-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Metric Display Cards */
+.metric-tile {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    height: 100%;
+}
+
+.metric-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.metric-value {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 4px;
+}
+
+.metric-context {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* Minimal Semantic Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.badge-neutral {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.badge-success {
+    background: var(--semantic-success-bg);
+    color: var(--semantic-success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.badge-warning {
+    background: var(--semantic-warning-bg);
+    color: var(--semantic-warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.badge-error {
+    background: var(--semantic-error-bg);
+    color: var(--semantic-error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.badge-accent {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60A5FA;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+/* Clean Tables & Data Rows */
+.row-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    transition: border-color 0.15s ease;
+}
+
+.row-item:hover {
+    border-color: var(--border-hover);
+}
+
+/* Clean Dialogue Timeline */
+.dialogue-card {
+    padding: 12px 16px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--border-hover);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    margin-bottom: 8px;
+}
+
+.dialogue-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    margin-bottom: 4px;
+}
+
+.dialogue-speaker {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dialogue-time {
+    color: var(--text-muted);
+    font-family: ui-monospace, monospace;
+}
+
+.dialogue-text {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Streamlit Native Input Overrides */
+div.stTextInput input, div.stSelectbox select {
+    background-color: var(--bg-surface) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-md) !important;
+    color: var(--text-primary) !important;
+    font-size: 0.875rem !important;
+    box-shadow: none !important;
+}
+
+div.stTextInput input:focus {
+    border-color: var(--border-focus) !important;
+}
+
+/* Streamlit Button Restyling (Clean Vercel/Linear Solid Styling) */
+div.stButton > button {
+    background-color: var(--text-primary) !important;
+    color: #0B0C0E !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--radius-md) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 6px 16px !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+}
+
+div.stButton > button:hover {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    transform: none !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+div.stButton > button:active {
+    opacity: 0.9 !important;
+}
+
+/* Secondary Actions */
+div[data-testid="stDownloadButton"] > button {
+    background-color: var(--bg-surface-elevated) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-md) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 6px 14px !important;
+}
+
+div[data-testid="stDownloadButton"] > button:hover {
+    background-color: var(--bg-surface-hover) !important;
+    border-color: var(--border-hover) !important;
+}
+
+/* Minimal Tabs */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-    background-color: #0D131A;
-    padding: 6px;
-    border-radius: 12px;
-    border: 1px solid #212B36;
+    gap: 4px;
+    background-color: transparent;
+    padding: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 20px;
 }
 
 .stTabs [data-baseweb="tab"] {
     background-color: transparent !important;
-    border-radius: 8px !important;
-    color: #8B9AA8 !important;
-    font-weight: 600 !important;
-    padding: 8px 18px !important;
-    border: none !important;
+    border-radius: 0 !important;
+    color: var(--text-muted) !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    padding: 8px 14px !important;
+    border-bottom: 2px solid transparent !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--text-secondary) !important;
 }
 
 .stTabs [aria-selected="true"] {
-    background-color: #1A2430 !important;
-    color: #2FD9C4 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+    border-bottom: 2px solid var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+/* Streamlit Progress Bar */
+div.stProgress > div > div > div > div {
+    background-color: var(--accent-primary) !important;
 }
 </style>
 """
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+st.markdown(DESIGN_SYSTEM_CSS, unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
@@ -279,29 +403,25 @@ SAMPLE_MEETINGS_SEED = [
         "rawTranscript": "if you have this big warning about doing nothing at all in the gateway machine.",
         "transcript": [
             {
-                "speaker": "Speaker A (Audio Engineer)",
+                "speaker": "Speaker 1 (Audio Eng)",
                 "time": "00:00:04",
-                "color": "#2FD9C4",
-                "text": "If you have this big warning about doing nothing at all in the gateway machine...",
+                "text": "If you have this warning about doing nothing at all in the gateway machine...",
             },
             {
-                "speaker": "Speaker B (Systems Lead)",
+                "speaker": "Speaker 2 (Systems Lead)",
                 "time": "00:00:14",
-                "color": "#8B7CF5",
                 "text": "We should check the timeout thresholds and keep-alive buffers immediately.",
             },
             {
-                "speaker": "Speaker A (Audio Engineer)",
+                "speaker": "Speaker 1 (Audio Eng)",
                 "time": "00:00:22",
-                "color": "#2FD9C4",
                 "text": "Agreed, routing through the broker partition prevents gateway retry loops.",
             },
         ],
         "summary": (
             "The engineering leadership session addressed gateway machine warning alerts during "
-            "low-activity socket transitions. Audio Engineer (Speaker A) and Systems Lead (Speaker B) "
-            "established that adjusting socket keep-alive thresholds eliminates duplicate packet capture "
-            "intents caused by external gateway broker retry loops.\n\n"
+            "low-activity socket transitions. Team established that adjusting socket keep-alive thresholds "
+            "eliminates duplicate packet capture intents caused by external gateway broker retry loops.\n\n"
             "In addition, teleconference audio streams were standardized to 16kHz 16-bit mono PCM, "
             "producing optimal [1, 64, 128] log-Mel spectrogram slices for Variational Autoencoder (VAE) "
             "latent space encoding. End-to-end evaluation confirmed zero word error rate (0.000 WER) with "
@@ -309,37 +429,37 @@ SAMPLE_MEETINGS_SEED = [
         ),
         "decisions": [
             {
-                "id": "01",
+                "id": "D-01",
                 "title": "Update Gateway Machine Keep-Alive Timeout Thresholds",
-                "context": "Recalibrates idle socket threshold handlers to prevent duplicate message capture and external retry loops.",
+                "context": "Recalibrates idle socket threshold handlers to prevent duplicate message capture and retry loops.",
                 "timestamp": "00:00:04",
                 "category": "Infrastructure",
-                "consensus": "Unanimous Approval",
+                "consensus": "Unanimous",
                 "impact": "Critical",
             },
             {
-                "id": "02",
+                "id": "D-02",
                 "title": "Standardize Audio Stream Sampling to 16kHz 16-bit Mono PCM",
-                "context": "Formats teleconference audio into standardized 5-second sliding windows with [1, 64, 128] log-Mel spectrogram dimensions.",
+                "context": "Formats conference audio into uniform 5-second sliding windows with [1, 64, 128] log-Mel spectrogram slices.",
                 "timestamp": "00:00:14",
                 "category": "Signal Processing",
-                "consensus": "Audio Engineering Consensus",
+                "consensus": "Engineering Approval",
                 "impact": "High",
             },
             {
-                "id": "03",
+                "id": "D-03",
                 "title": "Enforce Continuous Neural Pipeline Evaluation Thresholds",
-                "context": "Mandates minimum 0.850 BERTScore and maximum 0.05 WER quality benchmarks across all processed meetings.",
+                "context": "Mandates minimum 0.850 BERTScore and maximum 0.05 WER quality benchmarks across processed sessions.",
                 "timestamp": "00:00:22",
-                "category": "Model Governance",
-                "consensus": "Model Evaluation Team",
-                "impact": "High",
+                "category": "Governance",
+                "consensus": "Quality Team",
+                "impact": "Medium",
             },
         ],
         "actionItems": [
             {
                 "task": "Configure gateway machine timeout parameters and deploy keep-alive threshold patches",
-                "owner": "Speaker 1 (David)",
+                "owner": "David Kim",
                 "deadline": "Friday, 5:00 PM",
                 "priority": "Critical",
                 "category": "Infrastructure",
@@ -347,35 +467,35 @@ SAMPLE_MEETINGS_SEED = [
             },
             {
                 "task": "Validate VAE latent space reconstruction fidelity and PSNR bounds",
-                "owner": "Speaker 2 (Sarah)",
+                "owner": "Sarah Chen",
                 "deadline": "Wednesday, 2:00 PM",
-                "priority": "Critical",
+                "priority": "High",
                 "category": "Neural Compression",
                 "status": "Completed",
             },
             {
                 "task": "Verify Whisper small ASR WER and CER metrics on 16kHz audio slices",
-                "owner": "Speaker 3 (Alex)",
+                "owner": "Alex Rivera",
                 "deadline": "Next Tuesday",
-                "priority": "High",
-                "category": "ASR Evaluation",
+                "priority": "Medium",
+                "category": "Evaluation",
                 "status": "Pending",
             },
             {
-                "task": "Automate FLAN-T5 summarization evaluation pipelines in production CI/CD",
-                "owner": "Speaker 4 (Elena)",
+                "task": "Automate FLAN-T5 summarization evaluation pipelines in CI/CD",
+                "owner": "Elena Rostova",
                 "deadline": "Next Thursday",
-                "priority": "High",
+                "priority": "Medium",
                 "category": "DevOps",
                 "status": "In Progress",
             },
         ],
         "keyPoints": [
-            "Verified full neural pipeline stack: 16kHz PCM audio → [1, 64, 128] Mel Spectrogram → VAE Latent Space → Whisper ASR → FLAN-T5 LLM.",
+            "Full neural pipeline: 16kHz PCM audio → [1, 64, 128] Mel Spectrogram → VAE Latent Space → Whisper ASR → FLAN-T5 LLM.",
             "Gateway machine warnings were isolated to socket timeout thresholds under idle streaming conditions.",
-            "Achieved perfect 0.000 Word Error Rate (WER) and 0.000 Character Error Rate (CER) on AMI benchmark test slices.",
-            "FLAN-T5 base reasoning model achieved 0.8641 BERTScore and 48.6% ROUGE-L against reference human meeting summaries.",
-            "Variational Autoencoder (VAE) demonstrated stable KL divergence (36.22 nats, beta=0.6) with zero reconstruction mode collapse.",
+            "Achieved 0.000 Word Error Rate (WER) and 0.000 Character Error Rate (CER) on AMI benchmark test slices.",
+            "FLAN-T5 base reasoning model achieved 0.8641 BERTScore and 48.6% ROUGE-L against reference human summaries.",
+            "Variational Autoencoder (VAE) demonstrated stable KL divergence (36.22 nats, beta=0.6).",
         ],
         "spectrogram": {
             "melBands": 64,
@@ -415,19 +535,16 @@ SAMPLE_MEETINGS_SEED = [
             {
                 "speaker": "Lead Architect",
                 "time": "00:04:12",
-                "color": "#2FD9C4",
                 "text": "The gRPC synchronous timeouts during month-end invoice batches are unsustainable.",
             },
             {
                 "speaker": "Principal Engineer",
                 "time": "00:07:45",
-                "color": "#8B7CF5",
                 "text": "Kafka partition rebalancing allows asynchronous retries without blocking HTTP connections.",
             },
             {
                 "speaker": "DevOps Manager",
                 "time": "00:15:20",
-                "color": "#F2B84B",
                 "text": "We will spin up a 3-broker Strimzi cluster on Kubernetes staging by Thursday.",
             },
         ],
@@ -438,7 +555,7 @@ SAMPLE_MEETINGS_SEED = [
         ),
         "decisions": [
             {
-                "id": "01",
+                "id": "D-01",
                 "title": "Migrate Billing Transactions to Kafka Event Bus",
                 "context": "Replaces synchronous gRPC ledger calls with partitioned event streams.",
                 "timestamp": "00:07:45",
@@ -458,7 +575,7 @@ SAMPLE_MEETINGS_SEED = [
             }
         ],
         "keyPoints": [
-            "P99 invoice processing latency will decrease from 380ms to < 45ms.",
+            "P99 invoice processing latency projected to drop from 380ms to under 45ms.",
             "Staging dual-write validation begins next sprint.",
         ],
         "spectrogram": {
@@ -472,54 +589,96 @@ SAMPLE_MEETINGS_SEED = [
 ]
 
 # -----------------------------------------------------------------------------
-# Initialize Session State
+# Navigation Configuration & State
 # -----------------------------------------------------------------------------
+NAV_OPTIONS = [
+    "Overview",
+    "Upload & Process",
+    "Meeting Sessions",
+    "Access Gate",
+    "Model Benchmarks",
+    "Corpus Dataset",
+    "Architecture",
+]
+
 if "meetings" not in st.session_state:
     st.session_state.meetings = {m["sessionId"]: m for m in SAMPLE_MEETINGS_SEED}
 
 if "unlocked_meetings" not in st.session_state:
-    # Pre-unlock default demo meeting for instant exploration
     st.session_state.unlocked_meetings = {"session-en2001a"}
 
 if "current_meeting_id" not in st.session_state:
     st.session_state.current_meeting_id = "session-en2001a"
 
-if "active_nav" not in st.session_state:
-    st.session_state.active_nav = "📊 Dashboard"
+if "active_nav" not in st.session_state or st.session_state.active_nav not in NAV_OPTIONS:
+    st.session_state.active_nav = "Overview"
 
 
 # -----------------------------------------------------------------------------
-# Helper: Heatmap Generator (Plotly)
+# Reusable UI Helpers
 # -----------------------------------------------------------------------------
-def generate_spectrogram_heatmap(matrix: np.ndarray, title: str, colorscale: str = "Viridis"):
+def render_header(title: str, description: str, meta: Optional[str] = None):
+    meta_html = f"<span class='badge badge-neutral'>{meta}</span>" if meta else ""
+    st.markdown(
+        f"""
+        <div class="page-header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                <div>
+                    <h1 class="page-title">{title}</h1>
+                    <p class="page-desc">{description}</p>
+                </div>
+                {meta_html}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_metric(label: str, value: str, context: Optional[str] = None):
+    ctx_html = f"<div class='metric-context'>{context}</div>" if context else ""
+    return f"""
+    <div class="metric-tile">
+        <div class="metric-label">{label}</div>
+        <div class="metric-value">{value}</div>
+        {ctx_html}
+    </div>
+    """
+
+
+def generate_clean_heatmap(matrix: np.ndarray, title: str, colorscale: str = "Blues"):
     fig = go.Figure(
         data=go.Heatmap(
             z=matrix,
             colorscale=colorscale,
-            showscale=True,
-            colorbar=dict(thickness=10, len=0.8, tickfont=dict(color="#8B9AA8", size=10)),
+            showscale=False,
         )
     )
     fig.update_layout(
-        title=dict(text=title, font=dict(color="#E7EDF3", size=13)),
+        title=dict(
+            text=title,
+            font=dict(color="#EDEDED", size=12, family="Inter, sans-serif"),
+            x=0.02,
+            y=0.92,
+        ),
         xaxis=dict(
-            title="Time Frames (t)",
-            color="#8B9AA8",
+            title=dict(text="Frames", font=dict(color="#58606E", size=10)),
+            color="#58606E",
             showgrid=False,
             zeroline=False,
-            tickfont=dict(size=10),
+            tickfont=dict(size=9),
         ),
         yaxis=dict(
-            title="Mel Filterbanks (m)",
-            color="#8B9AA8",
+            title=dict(text="Mel Bins", font=dict(color="#58606E", size=10)),
+            color="#58606E",
             showgrid=False,
             zeroline=False,
-            tickfont=dict(size=10),
+            tickfont=dict(size=9),
         ),
-        margin=dict(l=40, r=20, t=40, b=40),
-        height=260,
-        paper_bgcolor="#121821",
-        plot_bgcolor="#0A0E12",
+        margin=dict(l=35, r=15, t=35, b=35),
+        height=240,
+        paper_bgcolor="#111318",
+        plot_bgcolor="#0B0C0E",
     )
     return fig
 
@@ -532,7 +691,6 @@ def get_or_generate_matrices(meeting: Dict[str, Any]):
         res = np.array(spec["residualMatrix"])
         return orig, rec, res
 
-    # Generate synthetic 16x32 representative matrices
     rows, cols = 16, 32
     r_idx = np.arange(rows)[:, None]
     c_idx = np.arange(cols)[None, :]
@@ -553,7 +711,6 @@ def get_or_generate_matrices(meeting: Dict[str, Any]):
     rec = np.clip(orig + np.random.normal(0, noise_std, orig.shape), 0.0, 1.0)
     res = np.abs(orig - rec)
 
-    # Cache back
     meeting["spectrogram"]["originalMatrix"] = orig.tolist()
     meeting["spectrogram"]["reconstructedMatrix"] = rec.tolist()
     meeting["spectrogram"]["residualMatrix"] = res.tolist()
@@ -561,227 +718,149 @@ def get_or_generate_matrices(meeting: Dict[str, Any]):
 
 
 # -----------------------------------------------------------------------------
-# Sidebar Navigation
+# Sidebar Navigation (Clean Developer Product Aesthetic)
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.markdown(
         """
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-            <div style="background: rgba(47, 217, 196, 0.15); border: 1px solid #2FD9C4; border-radius: 12px; padding: 8px;">
-                <span style="font-size: 24px;">🎙️</span>
+        <div style="padding: 10px 4px 18px 4px; border-bottom: 1px solid #1F232C; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-weight: 600; font-size: 0.95rem; color: #EDEDED; letter-spacing: -0.01em;">
+                    Meeting Assistant
+                </span>
+                <span class="badge badge-neutral" style="font-family: ui-monospace, monospace; font-size: 0.7rem;">v2.0</span>
             </div>
-            <div>
-                <h3 style="margin: 0; font-size: 1.15rem; color: #E7EDF3; font-weight: 800; letter-spacing: -0.02em;">Meeting Assistant</h3>
-                <span class="badge-teal">v2.0 • Streamlit Cloud</span>
+            <div style="font-size: 0.78rem; color: #58606E; margin-top: 2px;">
+                Neural Audio Intelligence
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    nav_options = [
-        "📊 Dashboard",
-        "🎙️ Upload & Process",
-        "📋 Meeting Results",
-        "🔒 Join Protected Meeting",
-        "📈 Model Evaluation",
-        "🗄️ Dataset Explorer",
-        "ℹ️ About & Architecture",
-    ]
-
+    st.caption("NAVIGATION")
     st.radio(
-        "NAVIGATION",
-        nav_options,
+        "Navigation",
+        NAV_OPTIONS,
         key="active_nav",
         label_visibility="collapsed",
     )
 
-    st.markdown("---")
-
-    # System Status in Sidebar
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+    st.caption("SYSTEM STATUS")
     st.markdown(
         """
-        <div style="background: #121821; border: 1px solid #212B36; border-radius: 12px; padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 0.75rem; color: #8B9AA8; font-weight: 600;">PIPELINE ENGINE</span>
-                <span class="badge-green">● READY</span>
+        <div style="background-color: #111318; border: 1px solid #1F232C; border-radius: 6px; padding: 12px; font-size: 0.78rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="color: #8E95A3;">Inference Pipeline</span>
+                <span class="badge badge-success">Online</span>
             </div>
-            <div style="font-size: 0.8rem; color: #D3DEE8; margin-bottom: 4px;"><strong>Audio:</strong> 16kHz Mono PCM</div>
-            <div style="font-size: 0.8rem; color: #D3DEE8; margin-bottom: 4px;"><strong>Spectrogram:</strong> [1, 64, 128] Mel</div>
-            <div style="font-size: 0.8rem; color: #D3DEE8; margin-bottom: 4px;"><strong>Latent:</strong> VAE (beta=0.6)</div>
-            <div style="font-size: 0.8rem; color: #D3DEE8;"><strong>Transformer:</strong> FLAN-T5</div>
+            <div style="color: #58606E; font-size: 0.74rem;">
+                Whisper Small · FLAN-T5 Base · 16kHz PCM
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-    st.caption("AMI Corpus · PyTorch · Transformers · Streamlit")
-
 
 # =============================================================================
-# VIEW 1: DASHBOARD
+# VIEW 1: OVERVIEW (Formerly Dashboard)
 # =============================================================================
-if st.session_state.active_nav == "📊 Dashboard":
-    st.markdown(
-        """
-        <div style="margin-bottom: 24px;">
-            <h1 style="font-size: 2.2rem; font-weight: 800; color: #E7EDF3; margin-bottom: 6px;">
-                Enterprise Meeting Intelligence
-            </h1>
-            <p style="color: #8B9AA8; font-size: 1rem; margin: 0;">
-                Multi-speaker neural acoustic processing, latent log-Mel spectrogram representation, and structured executive synthesis.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+if st.session_state.active_nav == "Overview":
+    render_header(
+        title="System Overview",
+        description="Acoustic feature representation, multi-speaker transcription, and structured decision extraction.",
+        meta="Telemetry Active",
     )
 
-    # 4 Top Stats Cards
-    col1, col2, col3, col4 = st.columns(4)
+    # Clean Metric Grid
+    c1, c2, c3, c4 = st.columns(4)
     total_meetings = len(st.session_state.meetings)
 
-    with col1:
-        st.markdown(
-            f"""
-            <div class="stat-box">
-                <div class="stat-lbl">MEETINGS PROCESSED</div>
-                <div class="stat-val">{total_meetings}</div>
-                <div class="stat-delta">↑ Active Sessions</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col2:
-        st.markdown(
-            """
-            <div class="stat-box">
-                <div class="stat-lbl">ACTIVE MODELS</div>
-                <div class="stat-val">4</div>
-                <div class="stat-delta">AE, VAE, ASR, NLP</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col3:
-        st.markdown(
-            """
-            <div class="stat-box">
-                <div class="stat-lbl">PIPELINE STATUS</div>
-                <div class="stat-val" style="color: #4ADE80;">Online</div>
-                <div class="stat-delta">Low Latency · 0% Drop</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col4:
-        st.markdown(
-            """
-            <div class="stat-box">
-                <div class="stat-lbl">BENCHMARK WER</div>
-                <div class="stat-val">0.000</div>
-                <div class="stat-delta">AMI Corpus Test Split</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    with c1:
+        st.markdown(render_metric("Indexed Sessions", str(total_meetings), "All authorized meetings"), unsafe_allow_html=True)
+    with c2:
+        st.markdown(render_metric("Acoustic Models", "4 Active", "AE, VAE, GAN, Diffusion"), unsafe_allow_html=True)
+    with c3:
+        st.markdown(render_metric("Word Error Rate", "0.000", "AMI test benchmark"), unsafe_allow_html=True)
+    with c4:
+        st.markdown(render_metric("Reasoning Score", "0.8641", "FLAN-T5 BERTScore F1"), unsafe_allow_html=True)
 
     st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
-    # Active Architecture Banner
+    # Indexed Sessions Table
     st.markdown(
         """
-        <div class="ai-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-            <div>
-                <span class="badge-purple">END-TO-END PIPELINE</span>
-                <h3 style="color: #E7EDF3; margin: 8px 0 4px 0; font-size: 1.25rem;">Multi-Stage Neural Acoustic Architecture</h3>
-                <p style="color: #8B9AA8; font-size: 0.9rem; margin: 0;">
-                    Raw Audio (16kHz) → Log-Mel Filterbanks → Latent Variational Bottleneck → Whisper ASR → FLAN-T5 Reasoning.
-                </p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <span class="badge-teal">Latent: 256-dim</span>
-                <span class="badge-gold">PSNR: 25.3 dB</span>
-                <span class="badge-green">BERTScore: 0.864</span>
-            </div>
+        <div class="panel-header">
+            <h2 class="panel-title">Indexed Sessions</h2>
+            <span style="color: var(--text-muted); font-size: 0.78rem;">Showing all authorized records</span>
         </div>
         """,
-        unsafe_allow_html=True,
-    )
-
-    # Processed Meetings Table
-    st.markdown(
-        "<h3 style='color: #E7EDF3; font-size: 1.3rem; margin-top: 10px;'>Indexed Meeting Sessions</h3>",
         unsafe_allow_html=True,
     )
 
     for mid, meeting in st.session_state.meetings.items():
         is_unlocked = mid in st.session_state.unlocked_meetings
-        with st.container():
+        status_badge = (
+            "<span class='badge badge-success'>Unlocked</span>"
+            if is_unlocked
+            else "<span class='badge badge-warning'>Protected</span>"
+        )
+        model_name = meeting.get("config", {}).get("representationModel", "vae").upper()
+
+        col_left, col_btn = st.columns([5, 1])
+        with col_left:
             st.markdown(
                 f"""
-                <div class="ai-card" style="padding: 18px 24px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                                <h4 style="margin: 0; color: #E7EDF3; font-size: 1.1rem;">{meeting['meetingTitle']}</h4>
-                                <span class="badge-teal">{meeting.get('durationFormatted', '00:30')}</span>
-                                {'<span class="badge-green">Unlocked</span>' if is_unlocked else '<span class="badge-gold">🔒 Protected</span>'}
-                            </div>
-                            <p style="color: #8B9AA8; font-size: 0.88rem; margin: 0 0 8px 0; max-width: 800px;">
-                                {meeting['summary'][:160]}...
-                            </p>
-                            <div style="display: flex; gap: 14px; font-size: 0.8rem; color: #8B9AA8;">
-                                <span>📅 {meeting.get('date', 'Today')}</span>
-                                <span>👥 {meeting.get('participants', 2)} Speakers</span>
-                                <span>🎯 WER: {meeting.get('metrics', {}).get('wer', '0.000')}</span>
-                                <span>📊 BERTScore: {meeting.get('metrics', {}).get('bertScore', '0.864')}</span>
-                            </div>
+                <div class="row-item">
+                    <div style="flex: 1; padding-right: 16px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="font-weight: 600; font-size: 0.92rem; color: #EDEDED;">{meeting['meetingTitle']}</span>
+                            {status_badge}
+                            <span class="badge badge-neutral">{model_name}</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #8E95A3; line-height: 1.4; margin-bottom: 6px;">
+                            {meeting['summary'][:140]}...
+                        </div>
+                        <div style="display: flex; gap: 14px; font-size: 0.75rem; color: #58606E;">
+                            <span>Duration: {meeting.get('durationFormatted', '00:30')}</span>
+                            <span>Date: {meeting.get('date', 'Today')}</span>
+                            <span>WER: {meeting.get('metrics', {}).get('wer', '0.000')}</span>
                         </div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-            col_act1, col_act2 = st.columns([6, 1])
-            with col_act2:
-                if st.button("Open Analysis →", key=f"btn_open_{mid}"):
-                    st.session_state.current_meeting_id = mid
-                    st.session_state.active_nav = "📋 Meeting Results"
-                    st.rerun()
+        with col_btn:
+            st.markdown("<div style='height: 18px;'></div>", unsafe_allow_html=True)
+            if st.button("Open", key=f"btn_open_{mid}", use_container_width=True):
+                st.session_state.current_meeting_id = mid
+                st.session_state.active_nav = "Meeting Sessions"
+                st.rerun()
 
 
 # =============================================================================
 # VIEW 2: UPLOAD & PROCESS
 # =============================================================================
-elif st.session_state.active_nav == "🎙️ Upload & Process":
-    st.markdown(
-        """
-        <div style="margin-bottom: 24px;">
-            <h1 style="font-size: 2.2rem; font-weight: 800; color: #E7EDF3; margin-bottom: 6px;">
-                Upload & Process Meeting
-            </h1>
-            <p style="color: #8B9AA8; font-size: 1rem; margin: 0;">
-                Ingest meeting audio, extract log-Mel spectrograms, compute latent representation, and generate actionable insights.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+elif st.session_state.active_nav == "Upload & Process":
+    render_header(
+        title="Upload & Ingestion Pipeline",
+        description="Ingest meeting audio, extract log-Mel spectrograms, compute latent representations, and run inference.",
     )
 
-    tab_file, tab_sample = st.tabs(["📁 Upload Audio File", "⚡ Select AMI Corpus Sample"])
+    tab_file, tab_sample = st.tabs(["Audio File Upload", "AMI Benchmark Corpus"])
 
     selected_audio_path = None
     audio_display_name = None
 
     with tab_file:
         uploaded_file = st.file_uploader(
-            "Upload audio file (.wav, .mp3, .m4a, .flac)",
+            "Select audio recording (.wav, .mp3, .m4a)",
             type=["wav", "mp3", "m4a", "flac"],
-            help="16kHz 16-bit mono WAV recommended for optimal Mel-filterbank resolution.",
+            label_visibility="collapsed",
+            help="16,000 Hz 16-bit mono PCM recommended for optimal filterbank resolution.",
         )
         if uploaded_file is not None:
             temp_dir = os.path.join(PROJECT_ROOT, "temp_uploads")
@@ -791,44 +870,32 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
                 f.write(uploaded_file.getbuffer())
             selected_audio_path = saved_path
             audio_display_name = uploaded_file.name
-            st.success(f"Loaded: {uploaded_file.name} ({len(uploaded_file.getbuffer()) // 1024} KB)")
+            st.caption(f"Ready: {uploaded_file.name} ({len(uploaded_file.getbuffer()) // 1024} KB)")
             st.audio(uploaded_file)
 
     with tab_sample:
-        st.markdown(
-            "<p style='color: #8B9AA8; font-size: 0.9rem;'>Instantly test with pre-indexed AMI Meeting Corpus recordings:</p>",
-            unsafe_allow_html=True,
-        )
         sample_options = [
-            "AMI Corpus EN2001a (Gateway Machine Warnings) - 30s",
-            "AMI Corpus ES2002a (Remote Control Design Kickoff) - 16kHz",
-            "AMI Corpus IS1001a (Industrial Design Interface) - 16kHz",
+            "AMI Corpus EN2001a (Gateway Machine Warning) — 30s",
+            "AMI Corpus ES2002a (Remote Control Kickoff) — 16kHz",
+            "AMI Corpus IS1001a (Interface Design Discussion) — 16kHz",
         ]
-        chosen_sample = st.selectbox("Choose Benchmark Audio Slice", sample_options)
-        if st.button("Load Selected Benchmark Sample"):
-            # Check if local sample file exists
+        chosen_sample = st.selectbox("Select reference recording slice", sample_options, label_visibility="collapsed")
+        if st.button("Load Benchmark Slice"):
             local_sample = os.path.join(
                 PROJECT_ROOT, "samples", "amicorpus", "ES2002a", "audio", "ES2002a.Mix-Headset.wav"
             )
-            if os.path.exists(local_sample):
-                selected_audio_path = local_sample
-            else:
-                selected_audio_path = "sample_benchmark.wav"
-            audio_display_name = chosen_sample.split(" - ")[0]
-            st.info(f"Loaded benchmark slice: {chosen_sample}")
+            selected_audio_path = local_sample if os.path.exists(local_sample) else "sample_benchmark.wav"
+            audio_display_name = chosen_sample.split(" — ")[0]
+            st.info(f"Loaded: {chosen_sample}")
 
-    st.markdown("<hr style='border-color: #212B36; margin: 24px 0;'>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
-    # Access Control Section
+    # Configuration Form
     st.markdown(
         """
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-            <span style="font-size: 1.2rem;">🔒</span>
-            <h3 style="color: #E7EDF3; margin: 0; font-size: 1.2rem;">Access Control & Password Protection</h3>
+        <div class="panel-header">
+            <h2 class="panel-title">Pipeline & Security Settings</h2>
         </div>
-        <p style="color: #8B9AA8; font-size: 0.88rem; margin-bottom: 14px;">
-            Set a password of at least 8 characters. Team members must enter this password to view transcripts and decisions.
-        </p>
         """,
         unsafe_allow_html=True,
     )
@@ -836,100 +903,80 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
     col_p1, col_p2 = st.columns(2)
     with col_p1:
         meeting_password = st.text_input(
-            "Meeting Password *",
+            "Access Password (min. 8 characters) *",
             type="password",
-            placeholder="Minimum 8 characters (e.g., SecureP@ss2026)",
-            help="Required for end-to-end access control.",
+            placeholder="Set a session protection password",
+            help="Required for zero-trust per-meeting access control.",
         )
     with col_p2:
         custom_meeting_title = st.text_input(
-            "Meeting Title / Subject",
+            "Session Title",
             value=audio_display_name or "Project Architecture Sync",
-            placeholder="e.g. Q3 Roadmap Review",
+            placeholder="e.g., Q3 Roadmap Review",
         )
 
-    st.markdown("<hr style='border-color: #212B36; margin: 20px 0;'>", unsafe_allow_html=True)
-
-    # Model Configuration Section
-    st.markdown(
-        """
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-            <span style="font-size: 1.2rem;">⚙️</span>
-            <h3 style="color: #E7EDF3; margin: 0; font-size: 1.2rem;">Pipeline Architecture Configuration</h3>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
     col_m1, col_m2, col_m3 = st.columns(3)
-
     with col_m1:
         rep_model = st.selectbox(
-            "Representation Model (Latent Space)",
-            options=[
+            "Latent Representation",
+            [
                 "Variational Autoencoder (VAE)",
                 "Autoencoder (AE)",
                 "Generative Adversarial Network (GAN)",
                 "Diffusion Model (DDPM)",
-                "Direct Spectrogram (Bypass)",
+                "Direct Spectrogram Input",
             ],
             index=0,
-            help="Compresses 64x128 log-Mel spectrogram into a dense 256-dimensional bottleneck.",
         )
-
     with col_m2:
         asr_model = st.selectbox(
-            "ASR Speech-to-Text Model",
-            options=[
-                "openai/whisper-small (Standard, Multilingual)",
-                "openai/whisper-base (Fast, Lightweight)",
-                "openai/whisper-tiny (Ultra-low latency)",
+            "ASR Engine",
+            [
+                "openai/whisper-small (Standard)",
+                "openai/whisper-base (Fast)",
+                "openai/whisper-tiny (Ultra-light)",
             ],
             index=0,
         )
-
     with col_m3:
         llm_model = st.selectbox(
-            "Transformer NLP / Reasoning",
-            options=[
-                "google/flan-t5-base (Balanced Reasoning)",
-                "google/flan-t5-small (Low Memory Footprint)",
-                "facebook/bart-large-cnn (Abstractive Summarization)",
+            "Reasoning Engine",
+            [
+                "google/flan-t5-base (Balanced)",
+                "google/flan-t5-small (Low latency)",
+                "facebook/bart-large-cnn (Summarization)",
             ],
             index=0,
         )
 
-    # Execution Mode Toggle
     fast_mode = st.checkbox(
-        "⚡ Fast Inference Mode (Recommended for Cloud Hosting)",
+        "Fast Execution Mode (Optimized for cloud memory bounds)",
         value=True,
-        help="Executes audio feature extraction and returns verified high-fidelity synthesis in < 3s, avoiding Streamlit Cloud memory limits.",
+        help="Runs audio preprocessing and generates structured results in < 2 seconds.",
     )
 
-    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
-    if st.button("🚀 Start Neural Processing Pipeline", use_container_width=True):
+    if st.button("Run Ingestion Pipeline", use_container_width=True):
         if not meeting_password or len(meeting_password) < 8:
-            st.error("⚠️ A password of at least 8 characters is required to protect this meeting.")
+            st.error("A password of at least 8 characters is required to protect this meeting.")
         else:
             progress_bar = st.progress(0)
             status_text = st.empty()
 
             stages = [
-                ("Decoding audio stream at 16,000Hz (16-bit mono PCM)...", 15),
-                ("Extracting Short-Time Fourier Transform (STFT) [1, 64, 128] log-Mel filterbanks...", 35),
-                (f"Encoding into {rep_model} latent manifold (256-dim bottleneck)...", 55),
-                (f"Running Speech-to-Text inference with {asr_model.split()[0]}...", 75),
-                (f"Generating structured executive summary & action items with {llm_model.split()[0]}...", 90),
-                ("Finalizing quality metrics, PSNR verification, and access tokens...", 100),
+                ("Decoding audio stream at 16,000Hz (16-bit mono PCM)", 20),
+                ("Extracting Short-Time Fourier Transform log-Mel filterbanks", 45),
+                (f"Encoding into {rep_model} latent manifold (256-dim bottleneck)", 70),
+                (f"Running ASR and FLAN-T5 reasoning engine", 90),
+                ("Finalizing quality metrics and access tokens", 100),
             ]
 
             for stage_name, pct in stages:
-                status_text.markdown(f"**Stage:** `{stage_name}`")
+                status_text.caption(f"Progress: {stage_name}...")
                 progress_bar.progress(pct)
-                time.sleep(0.4 if fast_mode else 1.2)
+                time.sleep(0.3 if fast_mode else 1.0)
 
-            # Generate New Meeting Record
             new_id = f"session-{uuid.uuid4().hex[:8]}"
             rep_key = "vae" if "VAE" in rep_model else ("autoencoder" if "Autoencoder" in rep_model else "gan")
 
@@ -966,20 +1013,17 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
                     {
                         "speaker": "Speaker 1 (Audio Lead)",
                         "time": "00:00:05",
-                        "color": "#2FD9C4",
-                        "text": f"We have verified the audio ingestion pipeline using {rep_model}.",
+                        "text": f"Audio ingestion pipeline validated using {rep_model}.",
                     },
                     {
                         "speaker": "Speaker 2 (Product Manager)",
                         "time": "00:00:18",
-                        "color": "#8B7CF5",
-                        "text": "The transcript looks sharp. Let's make sure the action items have owners.",
+                        "text": "Confirmed. Action items and owners have been established.",
                     },
                     {
-                        "speaker": "Speaker 3 (Systems Engineer)",
+                        "speaker": "Speaker 3 (Systems Lead)",
                         "time": "00:00:32",
-                        "color": "#F2B84B",
-                        "text": "All services will enforce password-gated JWT access before releasing transcripts.",
+                        "text": "Access tokens are secured via the meeting password gate.",
                     },
                 ],
                 "summary": (
@@ -991,7 +1035,7 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
                 ),
                 "decisions": [
                     {
-                        "id": "01",
+                        "id": "D-01",
                         "title": f"Ratify {rep_model} as Standard Feature Extractor",
                         "context": "Maintains optimum reconstruction PSNR across multi-speaker conference audio.",
                         "timestamp": "00:00:05",
@@ -1000,26 +1044,26 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
                         "impact": "High",
                     },
                     {
-                        "id": "02",
+                        "id": "D-02",
                         "title": "Mandate Per-Meeting Password Authentication",
                         "context": "Enforces zero-trust access control for enterprise transcripts.",
                         "timestamp": "00:00:32",
                         "category": "Security",
-                        "consensus": "Security Team Ratified",
+                        "consensus": "Ratified",
                         "impact": "Critical",
                     },
                 ],
                 "actionItems": [
                     {
                         "task": f"Verify latency profile of {asr_model.split()[0]} in production environment",
-                        "owner": "Audio Engineering Team",
+                        "owner": "Audio Engineering",
                         "deadline": "Friday, 5:00 PM",
                         "priority": "High",
                         "category": "Performance",
                         "status": "In Progress",
                     },
                     {
-                        "task": "Distribute meeting ID and access password to authorized team participants",
+                        "task": "Distribute session ID and credentials to authorized team participants",
                         "owner": "Meeting Host",
                         "deadline": "Immediate",
                         "priority": "Critical",
@@ -1028,9 +1072,9 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
                     },
                 ],
                 "keyPoints": [
-                    f"Neural pipeline configured with {rep_model} and {llm_model.split()[0]}.",
-                    "Access control token generated and locked with user-supplied password.",
-                    "Log-Mel spectrogram matrices cached for interactive visualization.",
+                    f"Configured with {rep_model} and {llm_model.split()[0]}.",
+                    "Access control token generated and encrypted with user-supplied password.",
+                    "Spectrogram matrices cached for analytical review.",
                 ],
                 "spectrogram": {
                     "melBands": 64,
@@ -1045,89 +1089,85 @@ elif st.session_state.active_nav == "🎙️ Upload & Process":
             st.session_state.unlocked_meetings.add(new_id)
             st.session_state.current_meeting_id = new_id
 
-            st.success("✅ Meeting processing completed successfully!")
-            st.balloons()
-
             st.markdown(
                 f"""
-                <div class="ai-card" style="border-color: #2FD9C4;">
-                    <h3 style="color: #2FD9C4; margin: 0 0 8px 0;">🎉 Session Initialized & Protected</h3>
-                    <p style="color: #E7EDF3; margin-bottom: 4px;"><strong>Meeting ID:</strong> <code>{new_id}</code></p>
-                    <p style="color: #8B9AA8; margin-bottom: 14px;">Keep your password safe to share with attendees.</p>
+                <div class="row-item" style="border-color: var(--semantic-success); margin-top: 14px;">
+                    <div>
+                        <div style="font-weight: 600; color: #EDEDED; margin-bottom: 2px;">Session Ready & Secured</div>
+                        <div style="font-size: 0.8rem; color: #8E95A3;">Identifier: <code>{new_id}</code></div>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            if st.button("View Meeting Results Now →"):
-                st.session_state.active_nav = "📋 Meeting Results"
+            if st.button("View Meeting Results Now", use_container_width=True):
+                st.session_state.active_nav = "Meeting Sessions"
                 st.rerun()
 
 
 # =============================================================================
-# VIEW 3: MEETING RESULTS
+# VIEW 3: MEETING SESSIONS (Formerly Results)
 # =============================================================================
-elif st.session_state.active_nav == "📋 Meeting Results":
+elif st.session_state.active_nav == "Meeting Sessions":
     meeting_ids = list(st.session_state.meetings.keys())
     selected_id = st.selectbox(
-        "Active Meeting Session",
+        "Select Active Session",
         meeting_ids,
         index=meeting_ids.index(st.session_state.current_meeting_id)
         if st.session_state.current_meeting_id in meeting_ids
         else 0,
         format_func=lambda mid: f"{st.session_state.meetings[mid]['meetingTitle']} ({mid})",
+        label_visibility="collapsed",
     )
     st.session_state.current_meeting_id = selected_id
     meeting = st.session_state.meetings[selected_id]
 
-    # Check Access Control
     is_unlocked = selected_id in st.session_state.unlocked_meetings
 
     if not is_unlocked:
         st.markdown(
             """
-            <div class="ai-card" style="text-align: center; padding: 40px; border-color: #F2B84B;">
-                <span style="font-size: 48px;">🔒</span>
-                <h2 style="color: #E7EDF3; margin: 12px 0 6px 0;">Access-Protected Meeting</h2>
-                <p style="color: #8B9AA8; max-width: 500px; margin: 0 auto 20px auto;">
-                    This meeting session is encrypted with enterprise access control. Please enter the password to unlock the transcript, summary, and action items.
-                </p>
+            <div class="panel" style="text-align: center; padding: 36px 20px;">
+                <div style="font-size: 1.1rem; font-weight: 600; color: #EDEDED; margin-bottom: 6px;">Access Protected Session</div>
+                <div style="font-size: 0.85rem; color: #8E95A3; max-width: 460px; margin: 0 auto 20px auto;">
+                    This recording is protected under enterprise zero-trust policy. Enter the password configured during ingestion to inspect the analysis.
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
         col_u1, col_u2, col_u3 = st.columns([1, 2, 1])
         with col_u2:
-            entered_pw = st.text_input("Enter Meeting Password", type="password", key="unlock_field")
-            if st.button("Unlock Session", use_container_width=True):
+            entered_pw = st.text_input("Meeting Password", type="password", key="unlock_input", label_visibility="collapsed", placeholder="Enter session password")
+            if st.button("Authenticate", use_container_width=True):
                 if entered_pw == meeting.get("password"):
                     st.session_state.unlocked_meetings.add(selected_id)
-                    st.success("Access Granted! Loading meeting intelligence...")
                     st.rerun()
                 else:
-                    st.error("❌ Invalid password. Please check with your meeting host.")
+                    st.error("Invalid password for this meeting identifier.")
     else:
-        # Header Banner
         cfg = meeting.get("config", {})
         mets = meeting.get("metrics", {})
+
+        # Compact Session Meta Bar
         st.markdown(
             f"""
-            <div class="ai-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
+            <div class="panel" style="padding: 16px 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                     <div>
-                        <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-                            <span class="badge-teal">Session: {meeting['sessionId']}</span>
-                            <span class="badge-purple">{cfg.get('representationModel', 'VAE').upper()}</span>
-                            <span class="badge-green">● Completed</span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="font-size: 1.15rem; font-weight: 600; color: #EDEDED;">{meeting['meetingTitle']}</span>
+                            <span class="badge badge-success">Unlocked</span>
+                            <span class="badge badge-neutral">{cfg.get('representationModel', 'VAE').upper()}</span>
                         </div>
-                        <h2 style="color: #E7EDF3; font-weight: 800; margin: 0 0 6px 0;">{meeting['meetingTitle']}</h2>
-                        <div style="display: flex; gap: 16px; font-size: 0.85rem; color: #8B9AA8;">
-                            <span>⏱️ Duration: <strong>{meeting.get('durationFormatted', '00:30')}</strong></span>
-                            <span>📅 Date: <strong>{meeting.get('date', '2026-09-15')}</strong></span>
-                            <span>👥 Participants: <strong>{meeting.get('participants', 2)}</strong></span>
-                            <span>🎯 WER: <strong>{mets.get('wer', '0.000')}</strong></span>
-                            <span>✨ BERTScore: <strong>{mets.get('bertScore', '0.864')}</strong></span>
+                        <div style="font-size: 0.78rem; color: #8E95A3;">
+                            ID: <code>{meeting['sessionId']}</code> · Duration: {meeting.get('durationFormatted', '00:30')} · Date: {meeting.get('date', '2026-09-15')} · Participants: {meeting.get('participants', 2)}
                         </div>
+                    </div>
+                    <div style="display: flex; gap: 12px; font-size: 0.8rem;">
+                        <span style="color: #8E95A3;">WER: <strong style="color: #EDEDED;">{mets.get('wer', '0.000')}</strong></span>
+                        <span style="color: #8E95A3;">BERTScore: <strong style="color: #EDEDED;">{mets.get('bertScore', '0.864')}</strong></span>
                     </div>
                 </div>
             </div>
@@ -1135,251 +1175,184 @@ elif st.session_state.active_nav == "📋 Meeting Results":
             unsafe_allow_html=True,
         )
 
-        # 7 Detailed Tabs Matching React Frontend
-        (
-            tab_transcript,
-            tab_summary,
-            tab_decisions,
-            tab_actions,
-            tab_keypoints,
-            tab_spectrogram,
-            tab_models,
-        ) = st.tabs(
+        tab_transcript, tab_summary, tab_decisions, tab_actions, tab_keypoints, tab_spectrogram, tab_models = st.tabs(
             [
-                "📝 Full Transcript",
-                "📑 Summary",
-                "⚖️ Decisions",
-                "✅ Action Items",
-                "💡 Key Points",
-                "📈 Spectrogram Charts",
-                "🔬 Model Results",
+                "Transcript",
+                "Summary",
+                "Decisions",
+                "Action Items",
+                "Key Points",
+                "Spectrograms",
+                "Model Metrics",
             ]
         )
 
-        # TAB 1: Full Transcript
+        # 1. Transcript
         with tab_transcript:
-            st.markdown(
-                "<h3 style='color: #E7EDF3; font-size: 1.2rem;'>Timestamped Dialogue with Speaker Diarization</h3>",
-                unsafe_allow_html=True,
-            )
-            search_query = st.text_input("🔍 Search within transcript...", "")
-
-            transcript_items = meeting.get("transcript", [])
-            for item in transcript_items:
+            search_query = st.text_input("Filter transcript keywords", "", label_visibility="collapsed", placeholder="Filter utterances...")
+            for item in meeting.get("transcript", []):
                 if search_query.lower() in item["text"].lower() or search_query.lower() in item["speaker"].lower():
                     st.markdown(
                         f"""
-                        <div class="transcript-bubble" style="border-left-color: {item.get('color', '#2FD9C4')};">
-                            <div class="transcript-header">
-                                <span class="speaker-tag" style="color: {item.get('color', '#2FD9C4')};">{item['speaker']}</span>
-                                <span class="timestamp-tag">{item['time']}</span>
+                        <div class="dialogue-card">
+                            <div class="dialogue-meta">
+                                <span class="dialogue-speaker">{item['speaker']}</span>
+                                <span class="dialogue-time">{item['time']}</span>
                             </div>
-                            <div class="transcript-text">{item['text']}</div>
+                            <div class="dialogue-text">{item['text']}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
 
-        # TAB 2: Summary
+        # 2. Summary
         with tab_summary:
             st.markdown(
-                """
-                <div class="ai-card">
-                    <span class="badge-purple">EXECUTIVE ABSTRACT</span>
-                    <h3 style="color: #E7EDF3; margin: 12px 0 10px 0;">Core Discussion Summary</h3>
-                    <p style="color: #D3DEE8; font-size: 1rem; line-height: 1.7; white-space: pre-line;">
-                """
-                + meeting.get("summary", "")
-                + """
-                    </p>
+                f"""
+                <div class="panel">
+                    <div style="font-size: 0.75rem; text-transform: uppercase; color: #58606E; font-weight: 600; margin-bottom: 8px;">Executive Synthesis</div>
+                    <div style="font-size: 0.9rem; color: #D1D5DB; line-height: 1.6; white-space: pre-line;">
+                        {meeting.get("summary", "")}
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-        # TAB 3: Decisions
+        # 3. Decisions
         with tab_decisions:
-            st.markdown(
-                "<h3 style='color: #E7EDF3; font-size: 1.2rem;'>Ratified Meeting Decisions</h3>",
-                unsafe_allow_html=True,
-            )
             decisions = meeting.get("decisions", [])
             if not decisions:
-                st.info("No formal decisions flagged in this session.")
+                st.info("No explicit decisions identified in this session.")
             for d in decisions:
-                impact_color = (
-                    "#F87171"
-                    if d.get("impact") == "Critical"
-                    else ("#F2B84B" if d.get("impact") == "High" else "#38BDF8")
-                )
+                imp = d.get("impact", "Medium")
+                badge_type = "badge-error" if imp == "Critical" else ("badge-warning" if imp == "High" else "badge-neutral")
                 st.markdown(
                     f"""
-                    <div class="ai-card" style="margin-bottom: 14px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <span class="badge-teal">Decision #{d.get('id', '01')} · {d.get('category', 'General')}</span>
-                            <span style="color: {impact_color}; font-weight: 700; font-size: 0.8rem; border: 1px solid {impact_color}; padding: 2px 8px; border-radius: 6px;">
-                                {d.get('impact', 'Medium')} Impact
-                            </span>
+                    <div class="row-item" style="flex-direction: column; align-items: flex-start;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px;">
+                            <span style="font-weight: 600; font-size: 0.9rem; color: #EDEDED;">{d.get('title', '')}</span>
+                            <span class="badge {badge_type}">{imp}</span>
                         </div>
-                        <h4 style="color: #E7EDF3; margin: 4px 0 8px 0; font-size: 1.1rem;">{d.get('title', '')}</h4>
-                        <p style="color: #8B9AA8; font-size: 0.9rem; margin-bottom: 8px;">{d.get('context', '')}</p>
-                        <div style="font-size: 0.8rem; color: #4ADE80;">✓ Consensus: {d.get('consensus', 'Approved')} (at {d.get('timestamp', '00:00:00')})</div>
+                        <div style="font-size: 0.82rem; color: #8E95A3; margin-bottom: 6px;">{d.get('context', '')}</div>
+                        <div style="font-size: 0.75rem; color: #58606E;">
+                            Category: {d.get('category', 'General')} · Consensus: {d.get('consensus', 'Approved')} · Time: {d.get('timestamp', '00:00:00')}
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-        # TAB 4: Action Items
+        # 4. Action Items
         with tab_actions:
-            st.markdown(
-                "<h3 style='color: #E7EDF3; font-size: 1.2rem;'>Action Items Tracker</h3>",
-                unsafe_allow_html=True,
-            )
             actions = meeting.get("actionItems", [])
             for idx, a in enumerate(actions):
-                c_chk, c_body = st.columns([1, 15])
-                with c_chk:
-                    is_done = st.checkbox("", key=f"act_done_{meeting['sessionId']}_{idx}")
-                with c_body:
-                    p_badge = (
-                        '<span class="badge-gold">Critical</span>'
-                        if a.get("priority") == "Critical"
-                        else '<span class="badge-teal">High</span>'
-                    )
+                col_c, col_b = st.columns([1, 24])
+                with col_c:
+                    is_done = st.checkbox("", key=f"act_{meeting['sessionId']}_{idx}", label_visibility="collapsed")
+                with col_b:
+                    pri = a.get("priority", "Medium")
+                    pri_badge = "badge-error" if pri == "Critical" else ("badge-warning" if pri == "High" else "badge-neutral")
+                    task_style = "color: #58606E; text-decoration: line-through;" if is_done else "color: #EDEDED; font-weight: 500;"
                     st.markdown(
                         f"""
-                        <div style="background: #121821; border: 1px solid #212B36; border-radius: 10px; padding: 12px 16px; margin-bottom: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 0.95rem; color: {'#8B9AA8; text-decoration: line-through;' if is_done else '#E7EDF3; font-weight: 500;'}">
-                                    {a.get('task', '')}
-                                </span>
-                                {p_badge}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0 10px 0; border-bottom: 1px solid var(--border-subtle); margin-bottom: 8px;">
+                            <div>
+                                <span style="{task_style} font-size: 0.88rem;">{a.get('task')}</span>
+                                <div style="font-size: 0.75rem; color: #58606E; margin-top: 2px;">
+                                    Assignee: {a.get('owner', 'Unassigned')} · Due: {a.get('deadline', 'TBD')} · Category: {a.get('category', 'General')}
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 16px; font-size: 0.8rem; color: #8B9AA8; margin-top: 6px;">
-                                <span>👤 <strong>Assignee:</strong> {a.get('owner', 'Unassigned')}</span>
-                                <span>⏰ <strong>Deadline:</strong> {a.get('deadline', 'TBD')}</span>
-                                <span>🏷️ <strong>Category:</strong> {a.get('category', 'General')}</span>
-                            </div>
+                            <span class="badge {pri_badge}">{pri}</span>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
 
-        # TAB 5: Key Points
+        # 5. Key Points
         with tab_keypoints:
-            st.markdown(
-                "<h3 style='color: #E7EDF3; font-size: 1.2rem;'>Key Takeaways & Technical Insights</h3>",
-                unsafe_allow_html=True,
-            )
-            key_points = meeting.get("keyPoints", [])
-            for kp in key_points:
+            for kp in meeting.get("keyPoints", []):
                 st.markdown(
                     f"""
-                    <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px;">
-                        <span style="color: #2FD9C4; font-size: 1.1rem;">◆</span>
-                        <div style="font-size: 0.95rem; color: #D3DEE8; line-height: 1.5;">{kp}</div>
+                    <div style="display: flex; gap: 10px; align-items: baseline; margin-bottom: 10px; font-size: 0.88rem; color: #D1D5DB;">
+                        <span style="color: #58606E; font-size: 0.75rem;">—</span>
+                        <span>{kp}</span>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-        # TAB 6: Spectrogram Charts
+        # 6. Spectrogram Charts
         with tab_spectrogram:
-            st.markdown(
-                """
-                <div style="margin-bottom: 16px;">
-                    <h3 style="color: #E7EDF3; font-size: 1.2rem; margin-bottom: 4px;">
-                        Interactive Mel-Spectrogram Latent Reconstruction
-                    </h3>
-                    <p style="color: #8B9AA8; font-size: 0.88rem; margin: 0;">
-                        Visualizing original 64x128 log-Mel filterbanks against latent autoencoder reconstruction and residual error diffs.
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
             orig_m, rec_m, res_m = get_or_generate_matrices(meeting)
 
-            c_heat1, c_heat2, c_heat3 = st.columns(3)
-            with c_heat1:
-                st.plotly_chart(
-                    generate_spectrogram_heatmap(orig_m, "Original Log-Mel Spectrogram", "Viridis"),
-                    use_container_width=True,
-                )
-            with c_heat2:
-                st.plotly_chart(
-                    generate_spectrogram_heatmap(rec_m, "Latent Reconstruction", "Viridis"),
-                    use_container_width=True,
-                )
-            with c_heat3:
-                st.plotly_chart(
-                    generate_spectrogram_heatmap(res_m, "Residual Difference Error", "Magma"),
-                    use_container_width=True,
-                )
+            ch1, ch2, ch3 = st.columns(3)
+            with ch1:
+                st.plotly_chart(generate_clean_heatmap(orig_m, "Original Log-Mel Filterbanks", "Blues"), use_container_width=True)
+            with ch2:
+                st.plotly_chart(generate_clean_heatmap(rec_m, "Latent Bottleneck Reconstruction", "Blues"), use_container_width=True)
+            with ch3:
+                st.plotly_chart(generate_clean_heatmap(res_m, "Residual Reconstruction Error", "Greys"), use_container_width=True)
 
-            # Quantitative Metrics Tiles
-            qm1, qm2, qm3, qm4 = st.columns(4)
-            with qm1:
-                st.metric("Peak SNR (PSNR)", mets.get("psnr", "25.338 dB"))
-            with qm2:
-                st.metric("SSIM Index", mets.get("ssim", "0.9746"))
-            with qm3:
-                st.metric("Reconstruction Loss", mets.get("representationLoss", "MSE: 0.00293"))
-            with qm4:
-                st.metric("KL Divergence", mets.get("klDivergence", "N/A"))
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                st.markdown(render_metric("Peak SNR", mets.get("psnr", "25.338 dB"), "Signal quality"), unsafe_allow_html=True)
+            with m2:
+                st.markdown(render_metric("SSIM Metric", mets.get("ssim", "0.9746"), "Structural similarity"), unsafe_allow_html=True)
+            with m3:
+                st.markdown(render_metric("Bottleneck Loss", mets.get("representationLoss", "0.00293"), "Reconstruction loss"), unsafe_allow_html=True)
+            with m4:
+                st.markdown(render_metric("KL Divergence", mets.get("klDivergence", "N/A"), "Latent space prior"), unsafe_allow_html=True)
 
-        # TAB 7: Model Results & Benchmarks
+        # 7. Model Metrics
         with tab_models:
-            st.markdown(
-                "<h3 style='color: #E7EDF3; font-size: 1.2rem;'>Pipeline Model Telemetry</h3>",
-                unsafe_allow_html=True,
-            )
-            col_bench1, col_bench2 = st.columns(2)
-            with col_bench1:
+            c_a, c_b = st.columns(2)
+            with c_a:
                 st.markdown(
                     f"""
-                    <div class="ai-card">
-                        <h4 style="color: #2FD9C4; margin: 0 0 10px 0;">Acoustic Speech Recognition (ASR)</h4>
-                        <p style="color: #8B9AA8; font-size: 0.9rem; margin-bottom: 6px;"><strong>Model:</strong> {cfg.get('asrModel', 'openai/whisper-small')}</p>
-                        <p style="color: #8B9AA8; font-size: 0.9rem; margin-bottom: 6px;"><strong>Word Error Rate (WER):</strong> {mets.get('wer', '0.000')}</p>
-                        <p style="color: #8B9AA8; font-size: 0.9rem;"><strong>Character Error Rate (CER):</strong> {mets.get('cer', '0.000')}</p>
+                    <div class="panel">
+                        <div class="panel-title" style="margin-bottom: 8px;">Acoustic Speech Recognition</div>
+                        <div style="font-size: 0.82rem; color: #8E95A3; margin-bottom: 10px;">Architecture: {cfg.get('asrModel', 'openai/whisper-small')}</div>
+                        <div style="display: flex; gap: 20px;">
+                            <div><span style="font-size: 0.72rem; color: #58606E;">WORD ERROR RATE</span><div style="font-size: 1.1rem; font-weight: 600; color: #EDEDED;">{mets.get('wer', '0.000')}</div></div>
+                            <div><span style="font-size: 0.72rem; color: #58606E;">CHAR ERROR RATE</span><div style="font-size: 1.1rem; font-weight: 600; color: #EDEDED;">{mets.get('cer', '0.000')}</div></div>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
-            with col_bench2:
+            with c_b:
                 st.markdown(
                     f"""
-                    <div class="ai-card">
-                        <h4 style="color: #8B7CF5; margin: 0 0 10px 0;">Reasoning & Extraction (NLP)</h4>
-                        <p style="color: #8B9AA8; font-size: 0.9rem; margin-bottom: 6px;"><strong>Model:</strong> {cfg.get('transformerModel', 'google/flan-t5-base')}</p>
-                        <p style="color: #8B9AA8; font-size: 0.9rem; margin-bottom: 6px;"><strong>BERTScore (F1):</strong> {mets.get('bertScore', '0.8641')}</p>
-                        <p style="color: #8B9AA8; font-size: 0.9rem;"><strong>ROUGE-L Score:</strong> {mets.get('rougeL', '48.6%')}</p>
+                    <div class="panel">
+                        <div class="panel-title" style="margin-bottom: 8px;">Language Reasoning</div>
+                        <div style="font-size: 0.82rem; color: #8E95A3; margin-bottom: 10px;">Architecture: {cfg.get('transformerModel', 'google/flan-t5-base')}</div>
+                        <div style="display: flex; gap: 20px;">
+                            <div><span style="font-size: 0.72rem; color: #58606E;">BERTSCORE F1</span><div style="font-size: 1.1rem; font-weight: 600; color: #EDEDED;">{mets.get('bertScore', '0.8641')}</div></div>
+                            <div><span style="font-size: 0.72rem; color: #58606E;">ROUGE-L</span><div style="font-size: 1.1rem; font-weight: 600; color: #EDEDED;">{mets.get('rougeL', '48.6%')}</div></div>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-        # Export Options
-        st.markdown("<hr style='border-color: #212B36; margin: 24px 0;'>", unsafe_allow_html=True)
-        col_exp1, col_exp2 = st.columns(2)
-        with col_exp1:
-            json_str = json.dumps(meeting, indent=2)
+        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
             st.download_button(
-                "📥 Export Full Meeting JSON Package",
-                data=json_str,
+                "Download Session JSON Package",
+                data=json.dumps(meeting, indent=2),
                 file_name=f"{meeting['sessionId']}_analysis.json",
                 mime="application/json",
                 use_container_width=True,
             )
-        with col_exp2:
-            md_summary = f"# {meeting['meetingTitle']}\n\n## Executive Summary\n{meeting['summary']}\n\n## Action Items\n"
+        with col_d2:
+            md_doc = f"# {meeting['meetingTitle']}\n\n## Summary\n{meeting['summary']}\n\n## Action Items\n"
             for a in meeting.get("actionItems", []):
-                md_summary += f"- **[{a.get('priority')}]** {a.get('task')} (Assignee: {a.get('owner')}, Due: {a.get('deadline')})\n"
+                md_doc += f"- [{a.get('priority')}] {a.get('task')} ({a.get('owner')})\n"
             st.download_button(
-                "📄 Download Markdown Executive Report",
-                data=md_summary,
+                "Download Markdown Executive Brief",
+                data=md_doc,
                 file_name=f"{meeting['sessionId']}_summary.md",
                 mime="text/markdown",
                 use_container_width=True,
@@ -1387,236 +1360,185 @@ elif st.session_state.active_nav == "📋 Meeting Results":
 
 
 # =============================================================================
-# VIEW 4: JOIN PROTECTED MEETING
+# VIEW 4: ACCESS GATE (Formerly Join Protected Meeting)
 # =============================================================================
-elif st.session_state.active_nav == "🔒 Join Protected Meeting":
-    st.markdown(
-        """
-        <div style="margin-bottom: 24px;">
-            <h1 style="font-size: 2.2rem; font-weight: 800; color: #E7EDF3; margin-bottom: 6px;">
-                Authenticate & Join Session
-            </h1>
-            <p style="color: #8B9AA8; font-size: 1rem; margin: 0;">
-                Unlock confidential meeting transcripts, latent neural spectrograms, and strategic summaries.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+elif st.session_state.active_nav == "Access Gate":
+    render_header(
+        title="Session Authentication",
+        description="Verify authorized credentials to unlock confidential meeting records.",
     )
 
     col_j1, col_j2, col_j3 = st.columns([1, 2, 1])
     with col_j2:
         st.markdown(
             """
-            <div class="ai-card">
-                <h3 style="color: #2FD9C4; margin: 0 0 12px 0;">Enter Meeting Credentials</h3>
+            <div class="panel">
+                <div class="panel-title" style="margin-bottom: 4px;">Authenticate Meeting Access</div>
+                <div style="font-size: 0.8rem; color: #8E95A3; margin-bottom: 14px;">Enter the meeting identifier and passkey provided by the host.</div>
             """,
             unsafe_allow_html=True,
         )
-        target_mid = st.text_input("Meeting ID (e.g., session-en2001a)", placeholder="session-...")
-        target_pw = st.text_input("Meeting Password", type="password", placeholder="Enter session password...")
+        target_mid = st.text_input("Meeting Identifier", placeholder="e.g., session-en2001a")
+        target_pw = st.text_input("Session Password", type="password", placeholder="Enter authorization password")
 
-        if st.button("Unlock and Load Meeting", use_container_width=True):
+        if st.button("Unlock Session Access", use_container_width=True):
             if target_mid in st.session_state.meetings:
                 mt = st.session_state.meetings[target_mid]
                 if target_pw == mt.get("password"):
                     st.session_state.unlocked_meetings.add(target_mid)
                     st.session_state.current_meeting_id = target_mid
-                    st.success(f"Successfully authenticated for: {mt['meetingTitle']}")
-                    st.session_state.active_nav = "📋 Meeting Results"
+                    st.success(f"Access granted for: {mt['meetingTitle']}")
+                    st.session_state.active_nav = "Meeting Sessions"
                     st.rerun()
                 else:
-                    st.error("❌ Incorrect password for this meeting ID.")
+                    st.error("Authentication failed: invalid session password.")
             else:
-                st.error("⚠️ Meeting ID not found. Please verify the ID with your meeting host.")
+                st.error("Session identifier not found.")
         st.markdown("</div>", unsafe_allow_html=True)
 
 
 # =============================================================================
-# VIEW 5: MODEL EVALUATION & BENCHMARKS
+# VIEW 5: MODEL BENCHMARKS (Formerly Model Evaluation)
 # =============================================================================
-elif st.session_state.active_nav == "📈 Model Evaluation":
-    st.markdown(
-        """
-        <div style="margin-bottom: 24px;">
-            <h1 style="font-size: 2.2rem; font-weight: 800; color: #E7EDF3; margin-bottom: 6px;">
-                Model Architecture & Benchmarks
-            </h1>
-            <p style="color: #8B9AA8; font-size: 1rem; margin: 0;">
-                Comprehensive evaluation metrics across representation autoencoders, Whisper ASR, and FLAN-T5 reasoning.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+elif st.session_state.active_nav == "Model Benchmarks":
+    render_header(
+        title="Architecture Benchmarks",
+        description="Quantitative metrics across acoustic feature models, speech recognition, and reasoning engines.",
     )
 
     models_data = [
         {
             "name": "Autoencoder (AE)",
-            "tag": "DETERMINISTIC COMPRESSION",
+            "category": "Deterministic Bottleneck",
             "checkpoint": "checkpoints/autoencoder.pt",
             "latency": 14,
             "params": "3.4M",
             "mse": "0.00293",
-            "psnr": "25.338 dB",
+            "psnr": "25.34 dB",
             "ssim": "0.9746",
-            "desc": "Deterministic latent compression with MSE loss and 256-dim bottleneck. Restored at epoch 68.",
         },
         {
             "name": "Variational Autoencoder (VAE)",
-            "tag": "PROBABILISTIC LATENT SPACE",
+            "category": "Probabilistic Latent Prior",
             "checkpoint": "checkpoints/vae.pt",
             "latency": 28,
             "params": "3.8M",
             "mse": "0.00752",
-            "psnr": "21.238 dB",
+            "psnr": "21.24 dB",
             "ssim": "0.9682",
-            "desc": "Probabilistic latent space with beta=0.6 KL regularization. Restored at epoch 68.",
         },
         {
             "name": "GAN Generator",
-            "tag": "SPECTRAL RESTORATION",
+            "category": "Adversarial Spectral Restoration",
             "checkpoint": "checkpoints/gan.pt",
             "latency": 65,
             "params": "18.2M",
             "mse": "0.00185",
-            "psnr": "26.800 dB",
+            "psnr": "26.80 dB",
             "ssim": "0.9810",
-            "desc": "Adversarial spectrogram reconstruction targeting clipped teleconference phonemes.",
         },
         {
             "name": "Score-Based Diffusion",
-            "tag": "ITERATIVE REVERSE DIFFUSION",
+            "category": "Iterative DDIM Denoising",
             "checkpoint": "checkpoints/diffusion.pt",
             "latency": 210,
             "params": "24.1M",
             "mse": "0.00091",
-            "psnr": "31.200 dB",
+            "psnr": "31.20 dB",
             "ssim": "0.9924",
-            "desc": "Score-based continuous diffusion model with 10-step DDIM schedule.",
         },
     ]
 
     for m in models_data:
         st.markdown(
             f"""
-            <div class="ai-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span class="badge-teal">{m['tag']}</span>
-                    <span style="color: #8B9AA8; font-size: 0.8rem; font-family: monospace;">{m['checkpoint']}</span>
+            <div class="row-item" style="padding: 14px 18px;">
+                <div style="flex: 2;">
+                    <div style="font-weight: 600; color: #EDEDED; font-size: 0.92rem;">{m['name']}</div>
+                    <div style="font-size: 0.78rem; color: #58606E; font-family: ui-monospace, monospace;">{m['checkpoint']}</div>
                 </div>
-                <h3 style="color: #E7EDF3; margin: 0 0 6px 0;">{m['name']}</h3>
-                <p style="color: #8B9AA8; font-size: 0.9rem; margin-bottom: 12px;">{m['desc']}</p>
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
-                    <div class="stat-box" style="padding: 10px 14px;">
-                        <div class="stat-lbl">PARAMS</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #E7EDF3;">{m['params']}</div>
-                    </div>
-                    <div class="stat-box" style="padding: 10px 14px;">
-                        <div class="stat-lbl">LATENCY</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #2FD9C4;">{m['latency']} ms</div>
-                    </div>
-                    <div class="stat-box" style="padding: 10px 14px;">
-                        <div class="stat-lbl">MSE</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #E7EDF3;">{m['mse']}</div>
-                    </div>
-                    <div class="stat-box" style="padding: 10px 14px;">
-                        <div class="stat-lbl">PSNR</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #8B7CF5;">{m['psnr']}</div>
-                    </div>
-                    <div class="stat-box" style="padding: 10px 14px;">
-                        <div class="stat-lbl">SSIM</div>
-                        <div style="font-size: 1.1rem; font-weight: 700; color: #4ADE80;">{m['ssim']}</div>
-                    </div>
+                <div style="flex: 1; text-align: right;">
+                    <span class="badge badge-neutral">{m['category']}</span>
+                </div>
+                <div style="flex: 3; display: flex; justify-content: flex-end; gap: 24px; font-size: 0.82rem;">
+                    <div><span style="color: #58606E; font-size: 0.7rem; display: block;">PARAMS</span>{m['params']}</div>
+                    <div><span style="color: #58606E; font-size: 0.7rem; display: block;">LATENCY</span>{m['latency']} ms</div>
+                    <div><span style="color: #58606E; font-size: 0.7rem; display: block;">MSE</span>{m['mse']}</div>
+                    <div><span style="color: #58606E; font-size: 0.7rem; display: block;">PSNR</span>{m['psnr']}</div>
+                    <div><span style="color: #58606E; font-size: 0.7rem; display: block;">SSIM</span>{m['ssim']}</div>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    # Latency Bar Chart
-    st.markdown(
-        "<h3 style='color: #E7EDF3; font-size: 1.2rem; margin-top: 10px;'>Inference Latency Comparison (ms)</h3>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+
     fig_lat = go.Figure(
         data=[
             go.Bar(
                 x=[m["name"] for m in models_data],
                 y=[m["latency"] for m in models_data],
-                marker_color=["#2FD9C4", "#8B7CF5", "#F2B84B", "#38BDF8"],
+                marker_color="#272B35",
                 text=[f"{m['latency']} ms" for m in models_data],
                 textposition="auto",
+                textfont=dict(color="#EDEDED", size=11, family="Inter, sans-serif"),
             )
         ]
     )
     fig_lat.update_layout(
-        paper_bgcolor="#121821",
-        plot_bgcolor="#0A0E12",
-        yaxis=dict(title="Wall-Clock Latency (ms)", color="#8B9AA8", showgrid=True, gridcolor="#212B36"),
-        xaxis=dict(color="#E7EDF3"),
-        height=300,
-        margin=dict(l=40, r=20, t=20, b=40),
+        title=dict(text="Wall-Clock Inference Latency (ms)", font=dict(color="#EDEDED", size=12)),
+        paper_bgcolor="#111318",
+        plot_bgcolor="#0B0C0E",
+        yaxis=dict(color="#58606E", showgrid=True, gridcolor="#1F232C", tickfont=dict(size=9)),
+        xaxis=dict(color="#8E95A3", tickfont=dict(size=10)),
+        height=260,
+        margin=dict(l=35, r=15, t=35, b=35),
     )
     st.plotly_chart(fig_lat, use_container_width=True)
 
 
 # =============================================================================
-# VIEW 6: DATASET EXPLORER (AMI CORPUS)
+# VIEW 6: CORPUS DATASET (Formerly Dataset Explorer)
 # =============================================================================
-elif st.session_state.active_nav == "🗄️ Dataset Explorer":
-    st.markdown(
-        """
-        <div style="margin-bottom: 24px;">
-            <h1 style="font-size: 2.2rem; font-weight: 800; color: #E7EDF3; margin-bottom: 6px;">
-                Edinburgh AMI Corpus Telemetry
-            </h1>
-            <p style="color: #8B9AA8; font-size: 1rem; margin: 0;">
-                Acoustic feature extraction, STFT mel-filterbank parameters, and cached PyTorch tensor splits.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+elif st.session_state.active_nav == "Corpus Dataset":
+    render_header(
+        title="AMI Meeting Corpus Specifications",
+        description="Dataset telemetry, log-Mel filterbank parameters, and acoustic segmentation pipeline.",
     )
 
-    # Dataset Spec Card
-    st.markdown(
-        """
-        <div class="ai-card">
-            <span class="badge-teal">CORPUS SPECIFICATION</span>
-            <h3 style="color: #E7EDF3; margin: 8px 0;">AMI Meeting Corpus (ihm subset)</h3>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 14px;">
-                <div><span style="color: #8B9AA8; font-size: 0.8rem;">HUGGINGFACE REPO:</span><br><strong>edinburghcstr/ami</strong></div>
-                <div><span style="color: #8B9AA8; font-size: 0.8rem;">SAMPLING RATE:</span><br><strong>16,000 Hz</strong></div>
-                <div><span style="color: #8B9AA8; font-size: 0.8rem;">FORMAT:</span><br><strong>16-bit Mono PCM</strong></div>
-                <div><span style="color: #8B9AA8; font-size: 0.8rem;">MEL FILTERBANKS:</span><br><strong>64 Bands</strong></div>
-                <div><span style="color: #8B9AA8; font-size: 0.8rem;">TIME FRAMES:</span><br><strong>128 Frames</strong></div>
-                <div><span style="color: #8B9AA8; font-size: 0.8rem;">TENSOR SHAPE:</span><br><strong>torch.Size([1, 64, 128])</strong></div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(render_metric("Sample Rate", "16,000 Hz", "16-bit mono PCM"), unsafe_allow_html=True)
+    with c2:
+        st.markdown(render_metric("Mel Filterbanks", "64 Bands", "STFT power spectrum"), unsafe_allow_html=True)
+    with c3:
+        st.markdown(render_metric("Time Frames", "128 Frames", "5.0s window length"), unsafe_allow_html=True)
+    with c4:
+        st.markdown(render_metric("Tensor Shape", "[1, 64, 128]", "PyTorch normalized"), unsafe_allow_html=True)
 
-    st.markdown("<h3 style='color: #E7EDF3; font-size: 1.2rem;'>6-Step Audio Preprocessing Pipeline</h3>", unsafe_allow_html=True)
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
     steps = [
-        ("01", "Streaming Mode", "Streams audio chunks on the fly to avoid multi-gigabyte memory footprint."),
-        ("02", "Soundfile Decode", "Decodes raw audio bytes into clean 32-bit floating point numpy waveforms."),
-        ("03", "16kHz Resampling", "Downsamples high-resolution inputs to the standard 16kHz speech recognition rate."),
-        ("04", "Chunking & Normalization", "Segments audio into uniform 5.0-second sliding windows (80,000 samples)."),
-        ("05", "STFT Mel Spectrogram", "Computes 64 Mel filterbanks across 128 time frames via Short-Time Fourier Transform."),
-        ("06", "Min-Max Normalization", "Normalizes power values linearly into [0.0, 1.0] for PyTorch training tensors."),
+        ("01", "Streaming Mode Ingestion", "Streams edinburghcstr/ami directly to prevent multi-gigabyte disk footprint."),
+        ("02", "Soundfile Byte Decoding", "Decodes chunks into 32-bit floating point numpy waveforms."),
+        ("03", "16kHz Resampling", "Downsamples multi-channel capture to uniform 16,000 Hz speech recognition baseline."),
+        ("04", "Chunk Normalization", "Segments continuous stream into uniform 5.0-second sliding windows (80,000 samples)."),
+        ("05", "STFT Mel-Filterbank", "Computes 64 Mel filterbanks across 128 time frames via Short-Time Fourier Transform."),
+        ("06", "Min-Max Linear Scaling", "Scales decibel power values into [0.0, 1.0] interval for neural model ingestion."),
     ]
 
     for num, name, desc in steps:
         st.markdown(
             f"""
-            <div style="background: #121821; border-left: 3px solid #2FD9C4; border-radius: 0 10px 10px 0; padding: 12px 18px; margin-bottom: 8px;">
-                <div style="display: flex; gap: 12px; align-items: center;">
-                    <span style="color: #2FD9C4; font-weight: 800; font-family: monospace;">{num}</span>
-                    <strong style="color: #E7EDF3;">{name}</strong>
+            <div class="row-item">
+                <div style="display: flex; gap: 14px; align-items: baseline;">
+                    <span style="font-family: ui-monospace, monospace; color: #58606E; font-size: 0.8rem; font-weight: 600;">{num}</span>
+                    <div>
+                        <div style="font-size: 0.88rem; font-weight: 500; color: #EDEDED;">{name}</div>
+                        <div style="font-size: 0.78rem; color: #8E95A3; margin-top: 2px;">{desc}</div>
+                    </div>
                 </div>
-                <div style="color: #8B9AA8; font-size: 0.88rem; margin-top: 4px; padding-left: 28px;">{desc}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1624,51 +1546,33 @@ elif st.session_state.active_nav == "🗄️ Dataset Explorer":
 
 
 # =============================================================================
-# VIEW 7: ABOUT & ARCHITECTURE
+# VIEW 7: ARCHITECTURE (Formerly About)
 # =============================================================================
-elif st.session_state.active_nav == "ℹ️ About & Architecture":
-    st.markdown(
-        """
-        <div style="margin-bottom: 24px;">
-            <h1 style="font-size: 2.2rem; font-weight: 800; color: #E7EDF3; margin-bottom: 6px;">
-                System Architecture & Team
-            </h1>
-            <p style="color: #8B9AA8; font-size: 1rem; margin: 0;">
-                Deep learning design principles, latent representation theory, and deployment capabilities.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
+elif st.session_state.active_nav == "Architecture":
+    render_header(
+        title="Pipeline Architecture",
+        description="End-to-end topological mapping of audio representation learning and transformer synthesis.",
     )
 
     st.markdown(
         """
-        <div class="ai-card">
-            <h3 style="color: #2FD9C4; margin: 0 0 10px 0;">Technical Pipeline Topology</h3>
-            <p style="color: #D3DEE8; line-height: 1.6;">
-                The <strong>Enterprise AI Meeting Assistant</strong> combines neural audio representation learning with
-                state-of-the-art transformer speech recognition and language reasoning.
-            </p>
-            <div style="background: #0A0E12; border: 1px solid #212B36; border-radius: 10px; padding: 16px; margin: 16px 0; font-family: monospace; color: #2FD9C4; font-size: 0.85rem; line-height: 1.7;">
-                [ Raw Audio (.wav/.mp3) ]<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;│<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;▼ (16kHz Resampling & STFT Filterbanks)<br>
-                [ Log-Mel Spectrogram Matrix (64 mels × 128 frames) ]<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;│<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;├──► [ Autoencoder / VAE Latent Compression (256-dim bottleneck) ]<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└──► Reconstruction Fidelity (PSNR: 25.3 dB, SSIM: 0.974)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-                [ OpenAI Whisper Small (Speech-to-Text) ]<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;└──► Word Error Rate (WER: 0.000 on AMI benchmark test)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-                [ Google FLAN-T5 Base (Entity Extraction & Reasoning) ]<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;└──► Executive Summary, Decisions, Action Items (BERTScore: 0.864)<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;▼<br>
-                [ Access Control Gate (Password Protection & Token Generation) ]
+        <div class="panel">
+            <div class="panel-title" style="margin-bottom: 8px;">System Topology</div>
+            <div style="font-size: 0.85rem; color: #8E95A3; margin-bottom: 16px; line-height: 1.5;">
+                The platform decouples acoustic representation from natural language reasoning. Low-level speech signals are 
+                compressed into a continuous latent space prior to transcription and semantic entity resolution.
             </div>
-            <p style="color: #8B9AA8; font-size: 0.9rem; margin: 0;">
-                All components are built with PyTorch, TorchAudio, Hugging Face Transformers, Plotly, and Streamlit.
-            </p>
+            <div style="background-color: #0B0C0E; border: 1px solid #1F232C; border-radius: 6px; padding: 14px 18px; font-family: ui-monospace, monospace; font-size: 0.78rem; color: #EDEDED; line-height: 1.6;">
+                Raw Audio (.wav / .mp3)
+                ├──► 16kHz Mono Resampling & STFT Filterbanks
+                │    └──► [1, 64, 128] Log-Mel Spectrogram Tensor
+                │         ├──► Latent Compression (VAE / Autoencoder 256-dim Bottleneck)
+                │         │    └──► Feature Verification (PSNR: 25.3 dB, SSIM: 0.974)
+                │         └──► Sequence Transcription (OpenAI Whisper Small ASR)
+                │              └──► Word Error Rate (0.000 WER Benchmark)
+                └──► Structured Reasoning (Google FLAN-T5 Base)
+                     └──► Summaries, Ratified Decisions, Action Items
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
