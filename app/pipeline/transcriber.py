@@ -79,13 +79,27 @@ def transcribe(
         if waveform.ndim > 1:
             waveform = waveform.mean(axis=1)  # downmix to mono
     except Exception as e:
-        print(f"[Transcriber] sf.read failed ({e}), trying torchaudio...")
-        tensor, sr = torchaudio.load(audio_path)
-        if tensor.ndim > 1 and tensor.shape[0] > 1:
-            tensor = tensor.mean(dim=0)
-        else:
-            tensor = tensor.squeeze(0)
-        waveform = tensor.numpy()
+        import subprocess, io
+        try:
+            cmd = [
+                "ffmpeg", "-nostdin", "-threads", "0", "-i", audio_path,
+                "-f", "wav", "-ac", "1", "-ar", "16000", "-"
+            ]
+            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if proc.returncode == 0:
+                waveform, sr = sf.read(io.BytesIO(proc.stdout), dtype="float32")
+                if waveform.ndim > 1:
+                    waveform = waveform.mean(axis=1)
+            else:
+                raise RuntimeError(proc.stderr.decode("utf-8", errors="ignore"))
+        except Exception as fe:
+            print(f"[Transcriber] ffmpeg failed ({fe}), trying torchaudio...")
+            tensor, sr = torchaudio.load(audio_path)
+            if tensor.ndim > 1 and tensor.shape[0] > 1:
+                tensor = tensor.mean(dim=0)
+            else:
+                tensor = tensor.squeeze(0)
+            waveform = tensor.numpy()
 
     waveform_tensor = torch.tensor(waveform, dtype=torch.float32)
     if sr != 16000:

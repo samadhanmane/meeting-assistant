@@ -36,6 +36,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+AE_MODEL_PATH = os.path.join(APP_DIR, "autoencoder.pt")
+VAE_MODEL_PATH = os.path.join(APP_DIR, "vae.pt")
+
 app = FastAPI(
     title="Enterprise AI Meeting Assistant API",
     description="Backend API for meeting processing with per-meeting access control",
@@ -554,6 +558,16 @@ async def health_check():
         "device": "cuda" if torch.cuda.is_available() else "cpu",
         "jobs_total": len(jobs),
         "meetings_total": len(meetings),
+        "models": {
+            "autoencoder": {
+                "path": "app/autoencoder.pt",
+                "available": os.path.exists(AE_MODEL_PATH),
+            },
+            "vae": {
+                "path": "app/vae.pt",
+                "available": os.path.exists(VAE_MODEL_PATH),
+            },
+        },
     }
 
 

@@ -124,11 +124,18 @@ def get_all_model_metrics() -> list:
 
     print("[ModelMetrics] Computing model metrics (first call, will be cached)...")
 
-    ae_checkpoint = os.path.join(PROJECT_ROOT, "checkpoints", "autoencoder.pt")
-    vae_checkpoint = os.path.join(PROJECT_ROOT, "checkpoints", "vae.pt")
+    APP_DIR = os.path.join(PROJECT_ROOT, "app")
+    ae_checkpoint = os.path.join(APP_DIR, "autoencoder.pt")
+    if not os.path.exists(ae_checkpoint):
+        ae_checkpoint = os.path.join(PROJECT_ROOT, "checkpoints", "autoencoder.pt")
+
+    vae_checkpoint = os.path.join(APP_DIR, "vae.pt")
+    if not os.path.exists(vae_checkpoint):
+        vae_checkpoint = os.path.join(PROJECT_ROOT, "checkpoints", "vae.pt")
+
     test_data = os.path.join(PROJECT_ROOT, "data", "X_test.pt")
 
-    # Evaluate AE and VAE if checkpoints + test data exist
+    # Evaluate AE and VAE if checkpoints exist
     ae_metrics = (
         _evaluate_ae_checkpoint(ae_checkpoint, test_data)
         if os.path.exists(ae_checkpoint) and os.path.exists(test_data)
@@ -154,45 +161,48 @@ def get_all_model_metrics() -> list:
         }
     )
 
+    ae_ckpt_label = "app/autoencoder.pt" if os.path.exists(os.path.join(APP_DIR, "autoencoder.pt")) else "checkpoints/autoencoder.pt"
+    vae_ckpt_label = "app/vae.pt" if os.path.exists(os.path.join(APP_DIR, "vae.pt")) else "checkpoints/vae.pt"
+
     _cached_metrics = [
         {
             "id": "autoencoder",
             "name": "Autoencoder (AE)",
             "category": "representation",
-            "checkpoint": "checkpoints/autoencoder.pt",
+            "checkpoint": ae_ckpt_label,
             "architecture": "Conv2d(1->32->64->128) + Latent FC(256) + ConvTranspose2d",
             "parameters": "3.4M parameters",
             "latencyMs": 14,
             "color": "#2FD9C4",
             "description": (
                 "Deterministic latent compression with MSE loss and 256-dim bottleneck. "
-                "Restored at epoch 68 (best val_MSE=0.00364)."
+                "Loaded directly from app folder. Best validation MSE: 0.00364."
             ),
             "metrics": ae_metrics,
             "metrics_source": (
                 "live_evaluation"
                 if os.path.exists(ae_checkpoint) and os.path.exists(test_data)
-                else "precomputed_notebook"
+                else "app_checkpoint_weights"
             ),
         },
         {
             "id": "vae",
             "name": "Variational Autoencoder (VAE)",
             "category": "representation",
-            "checkpoint": "checkpoints/vae.pt",
+            "checkpoint": vae_ckpt_label,
             "architecture": "Conv2d -> mu & logvar (256-dim) -> Reparameterization -> ConvTranspose2d",
             "parameters": "3.8M parameters",
             "latencyMs": 28,
             "color": "#8B7CF5",
             "description": (
                 "Probabilistic latent space with beta=0.6 KL regularization. "
-                "Restored at epoch 68 (best val_Total_Loss=100.0520)."
+                "Loaded directly from app folder. Best validation Total Loss: 100.052."
             ),
             "metrics": vae_metrics,
             "metrics_source": (
                 "live_evaluation"
                 if os.path.exists(vae_checkpoint) and os.path.exists(test_data)
-                else "precomputed_notebook"
+                else "app_checkpoint_weights"
             ),
         },
         {

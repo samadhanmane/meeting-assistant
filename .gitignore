@@ -44,6 +44,8 @@ data/*.npy
 samples/amicorpus/
 amicorpus/
 *.wav
+*.mp3
+videoplayback.mp3
 
 # Environment / Secret Files
 .env

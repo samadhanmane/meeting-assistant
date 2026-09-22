@@ -6,7 +6,7 @@
 
 An end-to-end neural meeting intelligence platform combining **acoustic feature representation learning**, **automatic speech recognition (Whisper)**, **instruction-tuned NLP reasoning (FLAN-T5)**, and **access-controlled meeting analytics**.
 
----
+
 
 ## 🚀 Key Features
 
@@ -81,8 +81,8 @@ Open [http://localhost:8501](http://localhost:8501) in your browser.
 
 | Model | Architecture | Checkpoint | Latency | Key Metric |
 |---|---|---|---|---|
-| **Autoencoder (AE)** | Conv2d(1→32→64→128) + FC(256) | `checkpoints/autoencoder.pt` | 14 ms | **PSNR: 25.34 dB**, MSE: 0.00293 |
-| **VAE** | Conv2d → Latent Prior $\mathcal{N}(0, I)$ | `checkpoints/vae.pt` | 28 ms | **KL Div: 36.22 nats**, PSNR: 21.24 dB |
+| **Autoencoder (AE)** | Conv2d(1→32→64→128) + FC(256) | `app/autoencoder.pt` | 14 ms | **PSNR: 25.34 dB**, MSE: 0.00293 |
+| **VAE** | Conv2d → Latent Prior $\mathcal{N}(0, I)$ | `app/vae.pt` | 28 ms | **KL Div: 36.22 nats**, PSNR: 21.24 dB |
 | **Whisper Small** | Seq2Seq Multilingual ASR | `openai/whisper-small` | ~1.2 s | **WER: 0.000**, CER: 0.000 |
 | **FLAN-T5 Base** | Instruction-Tuned Transformer | `google/flan-t5-base` | ~1.8 s | **BERTScore: 0.8641**, ROUGE-L: 48.6% |
 
@@ -99,12 +99,11 @@ meeting-assistant/
 ├── vae.py                    # PyTorch Variational Autoencoder architecture
 ├── preprocessing.py          # Audio preprocessing and Mel-spectrogram extraction
 ├── transformer_pipeline.py   # Whisper + FLAN-T5 pipeline
-├── checkpoints/              # Pretrained model weights
-│   ├── autoencoder.pt        # Trained AE weights
-│   └── vae.pt                # Trained VAE weights
 ├── samples/                  # AMI Corpus sample meeting audio
-├── app/                      # FastAPI backend service
+├── app/                      # FastAPI backend service & neural weights
 │   ├── main.py               # REST API & access control
+│   ├── autoencoder.pt        # Trained AE weights
+│   ├── vae.pt                # Trained VAE weights
 │   └── pipeline/             # Audio, transcriber, summarizer modules
 └── frontend/                 # React + Vite web application
 ```

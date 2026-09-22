@@ -46,7 +46,18 @@ def load_audio(file_path: str) -> tuple:
     waveform : torch.Tensor of shape (1, T) — mono
     sr : int — original sample rate
     """
-    data, sr = sf.read(file_path, dtype="float32", always_2d=False)
+    try:
+        data, sr = sf.read(file_path, dtype="float32", always_2d=False)
+    except Exception as e:
+        import subprocess
+        cmd = [
+            "ffmpeg", "-nostdin", "-threads", "0", "-i", file_path,
+            "-f", "wav", "-ac", "1", "-ar", "16000", "-"
+        ]
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Failed to decode audio file {file_path}: {proc.stderr.decode('utf-8', errors='ignore')}")
+        data, sr = sf.read(io.BytesIO(proc.stdout), dtype="float32", always_2d=False)
 
     waveform = torch.tensor(data, dtype=torch.float32)
     if waveform.ndim == 1:
@@ -66,7 +77,18 @@ def load_audio_from_bytes(audio_bytes: bytes, filename: str = "audio.wav") -> tu
     waveform : torch.Tensor of shape (1, T) — mono
     sr : int — original sample rate
     """
-    data, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32", always_2d=False)
+    try:
+        data, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32", always_2d=False)
+    except Exception as e:
+        import subprocess
+        cmd = [
+            "ffmpeg", "-nostdin", "-threads", "0", "-i", "-",
+            "-f", "wav", "-ac", "1", "-ar", "16000", "-"
+        ]
+        proc = subprocess.run(cmd, input=audio_bytes, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if proc.returncode != 0:
+            raise RuntimeError(f"Failed to decode audio bytes: {proc.stderr.decode('utf-8', errors='ignore')}")
+        data, sr = sf.read(io.BytesIO(proc.stdout), dtype="float32", always_2d=False)
 
     waveform = torch.tensor(data, dtype=torch.float32)
     if waveform.ndim == 1:
